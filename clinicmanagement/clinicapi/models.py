@@ -5,6 +5,7 @@ from ckeditor.fields import RichTextField
 from cloudinary.models import CloudinaryField
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 # Create your models here.
@@ -177,6 +178,10 @@ class Rating(BaseModel):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)
     content = RichTextField()
+    star = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+
+    def __str__(self):
+        return f'{self.patient} rating for {self.doctor} - {self.star} stars'
 
 
 class ForumQuestion(BaseModel):
@@ -203,6 +208,7 @@ class Notification(BaseModel):
 
     type = models.CharField(max_length=255, choices=Type.choices, default=Type.APPOINTMENT)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    is_read = models.BooleanField(default=False)
 
 
 class News(BaseModel):

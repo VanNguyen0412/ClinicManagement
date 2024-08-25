@@ -167,3 +167,9 @@ class HealthRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = HealthRecord
         fields = ['id', 'appointment_date', 'symptom','patient', 'diagnosis', 'doctor', 'allergy_medicines']
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = '__all__'

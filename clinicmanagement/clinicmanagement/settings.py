@@ -151,6 +151,7 @@ CLIENT_ID = 'Tb1JGVGg4Ew1bWMAdlWh7UdyQaefMl8Uc3QxLmQI'
 CLIENT_SECRET = '9mMKrSHbjNKmRiEQMyJajVbHwuhW9x7RQQieD7bOowG4mmkZOXU5X5ZxCs6RIoLc2WSwUCraLuCvqovDAugvmvJsStMPYlzQvgMbNEuci4vJJfNO2DznQi9zbPtCO3wm'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587

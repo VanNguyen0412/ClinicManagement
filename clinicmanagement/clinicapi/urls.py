@@ -11,6 +11,8 @@ r.register('doctor', views.DoctorViewSet, 'doctor')
 r.register('nurse', views.NurseViewSet, 'nurse')
 r.register('appointment', views.AppointmentViewSet, 'appointment')
 r.register('prescription', views.PrescriptionViewSet, 'prescription')
+r.register('notification', views.NotificationViewSet, 'notification')
+r.register('medicine', views.MedicineViewSet, 'medicine')
 
 
 urlpatterns = [
