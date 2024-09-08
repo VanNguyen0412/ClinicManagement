@@ -48,9 +48,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'clinicapi.apps.ClinicapiConfig',
+    'rest_framework',
     'ckeditor',
     'ckeditor_uploader',
-    'rest_framework',
     'drf_yasg',
     'oauth2_provider',
 ]

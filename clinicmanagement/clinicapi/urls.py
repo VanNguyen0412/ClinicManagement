@@ -13,8 +13,11 @@ r.register('appointment', views.AppointmentViewSet, 'appointment')
 r.register('prescription', views.PrescriptionViewSet, 'prescription')
 r.register('notification', views.NotificationViewSet, 'notification')
 r.register('medicine', views.MedicineViewSet, 'medicine')
+r.register('rating', views.RatingViewSet, 'rating')
+r.register('forum', views.ForumQuestionViewSet, 'forum')
 
 
 urlpatterns = [
     path('', include(r.urls)),
+    path('predict/', views.PredictView.as_view(), name='predict'),
 ]

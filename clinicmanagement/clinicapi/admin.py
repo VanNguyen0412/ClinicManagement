@@ -114,6 +114,20 @@ class PrescriptionAdmin(admin.ModelAdmin):
     list_display = ['id', 'appointment', 'doctor', 'symptom', 'diagnosis']
     search_fields = ['appointment']
 
+    def save_model(self, request, obj, form, change):
+        # Lưu đối tượng Prescription trước
+        super().save_model(request, obj, form, change)
+
+        # Tạo HealthRecord sau khi Prescription đã được lưu
+        HealthRecord.objects.create(
+            patient=obj.appointment.patient,  # Lấy thông tin bệnh nhân từ cuộc hẹn
+            appointment_date=obj.appointment.appointment_date,
+            symptom=obj.symptom,
+            diagnosis=obj.diagnosis,
+            allergy_medicines="None",  # Đặt mặc định allergy_medicines là None
+            doctor=obj.doctor
+        )
+
 
 class PreMeAdmin(admin.ModelAdmin):
     list_display = ['id', 'prescription', 'medicine', 'dosage', 'count', 'price']
@@ -121,6 +135,22 @@ class PreMeAdmin(admin.ModelAdmin):
 
 class HealthRecordAdmin(admin.ModelAdmin):
     list_display = ['id', 'appointment_date', 'symptom', 'diagnosis', 'patient', 'doctor', 'allergy_medicines']
+
+
+class HealthMonitoringAdmin(admin.ModelAdmin):
+    list_display = ['id', 'patient', 'height', 'weight', 'heart_rate', 'blood_pressure_systolic',
+                    'blood_pressure_diastolic', 'measurement_time']
+
+    def doctor_list(self, obj):
+        return ", ".join([f"{doctor.first_name} {doctor.last_name}" for doctor in obj.doctor.all()])
+
+    doctor_list.short_description = 'Doctor'
+
+    list_display.append('doctor_list')
+
+
+class ForumQuestionAdmin(admin.ModelAdmin):
+    list_display = fields = ['id', 'title', 'content', 'patient']
 
 
 # Register your models here.
@@ -132,11 +162,11 @@ admin_site.register(Nurse, NurseAdmin)
 admin_site.register(Appointment, AppointmentAdmin)
 admin_site.register(Prescription, PrescriptionAdmin)
 admin_site.register(HealthRecord, HealthRecordAdmin)
-admin_site.register(HealthMonitoring)
+admin_site.register(HealthMonitoring, HealthMonitoringAdmin)
 admin_site.register(Medicine, MedicineAdmin)
 admin_site.register(PrescriptionMedicine, PreMeAdmin)
 admin_site.register(Rating)
-admin_site.register(ForumQuestion)
+admin_site.register(ForumQuestion, ForumQuestionAdmin)
 admin_site.register(ForumAnswers)
 admin_site.register(Notification)
 admin_site.register(Payment)

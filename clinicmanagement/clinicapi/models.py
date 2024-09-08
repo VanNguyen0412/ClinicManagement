@@ -35,22 +35,6 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
-    # Xác định xem người dùng có phải là quản trị viên hay không
-    def is_admin(self):
-        return self.role == 'admin'
-
-    # Xác định xem người dùng có phải là bệnh nhân hay không
-    def is_patient(self):
-        return self.role == 'patient'
-
-    # Xác định xem người dùng có phải là bác sĩ hay không
-    def is_doctor(self):
-        return self.role == 'doctor'
-
-    # Xác định xem người dùng có phải là y tá hay không
-    def is_nurse(self):
-        return self.role == 'nurse'
-
 
 class People(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

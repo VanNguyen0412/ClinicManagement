@@ -1,6 +1,3 @@
-from django.shortcuts import render
-from django.contrib.auth import get_user_model
-from django.db import transaction
 from rest_framework import viewsets, generics, parsers, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -20,14 +17,23 @@ from django.http import HttpResponse
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 import os
-
+from .prediction import HypertensionPredictor
+from rest_framework.views import APIView
+from .perms import *
+from .paginators import *
 
 # Create your views here.
 class NewsViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = News.objects.filter(is_active=True)
     serializer_class = NewsSerializer
+    permission_classes = [permissions.IsAdminUser]
 
-    @action(methods=['post'], url_path='create', detail=False, permission_classes=[IsAdminUser])
+    def get_permissions(self):
+        if self.action in ['create_new', 'update_new', 'delete_new']:
+            return [permissions.IsAdminUser()]
+        return [permissions.AllowAny()]
+
+    @action(methods=['post'], url_path='create', detail=False)
     def create_new(self, request, *args, **kwargs):
         serializer = NewsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -35,10 +41,26 @@ class NewsViewSet(viewsets.ViewSet, generics.ListAPIView):
         return Response(serializer.data,
                         status=status.HTTP_201_CREATED)
 
+    @action(methods=['patch'], url_path='update', detail=True)
+    def update_new(self, request, pk=None):
+        new = self.get_object()
+        serializer = self.serializer_class(new, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['delete'], url_path='delete', detail=True)
+    def delete_new(self, request, pk=None):
+        new = self.get_object()
+        new.delete()
+        return Response({'detail': 'Đã xóa thành công.'}, status=status.HTTP_200_OK)
+
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
         if self.action in ['get_current_user']:
@@ -124,6 +146,15 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView
 class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Patient.objects.filter(user__is_active=True)
     serializer_class = PatientSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['create_patient', 'update_patient', 'create_health_monitoring',
+                           'update_health_monitoring', 'update_doctor', 'require_receipt']:
+            return [PatientOwner()]
+        elif self.action in ['get_health_record']:
+            return [DoctorPermission()]
+        return [permissions.AllowAny()]
 
     @action(methods=['post'], url_path='create', detail=False)
     def create_patient(self, request, pk=None):
@@ -133,16 +164,12 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
         except User.DoesNotExist:
             return Response({"error": "User does not exist", "user": user_id}, status=status.HTTP_400_BAD_REQUEST)
 
-        if user.role == 'patient':
-            data = request.data.copy()
-            data['user'] = user_id
-            serializer = self.get_serializer(data=data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response({"error": "Chỉ những người dùng có vai trò 'bệnh nhân' mới có thể tạo thông tin bệnh nhân."},
-                            status=status.HTTP_403_FORBIDDEN)
+        data = request.data.copy()
+        data['user'] = user_id
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=['patch'], url_path='update', detail=True)
     def update_patient(self, request, pk=None):
@@ -159,20 +186,86 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
     @action(methods=['get'], url_path='healthrecord', detail=True)
     def get_health_record(self, request, pk=None):
         patient = self.get_object()
-        # Check if the user is a doctor
-        if not hasattr(request.user, 'doctor'):
-            return Response(
-                {"detail": "Bạn không có quyền xem hồ sơ sức khỏe của bệnh nhân này."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         health_records = HealthRecord.objects.filter(patient_id=patient)
         serializer = HealthRecordSerializer(health_records, many=True)
         return Response(serializer.data)
+
+    @action(methods=['get'], url_path='health_monitoring', detail=True)
+    def get_health_monitoring(self, request, pk=None):
+        patient = self.get_object()
+        health_monitoring = HealthMonitoring.objects.filter(patient_id=patient)
+        serializer = HealthMonitoringSerializer(health_monitoring, many=True)
+        return Response(serializer.data)
+
+    @action(methods=['post'], url_path='create_health_monitoring', detail=True)
+    def create_health_monitoring(self, request, pk=None):
+        patient = self.get_object()
+
+        # Kiểm tra nếu đã tồn tại bản ghi theo dõi sức khỏe
+        if HealthMonitoring.objects.filter(patient=patient).exists():
+            return Response({"error": "Bệnh nhân này đã có bản ghi theo dõi sức khỏe, không thể tạo thêm."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Nếu chưa có bản ghi, tạo mới
+        data = request.data.copy()
+        data['patient'] = patient.id
+        serializer = HealthMonitoringSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Đã tạo tình trạng sức khỏe thành công"}, status=status.HTTP_201_CREATED)
+
+    @action(methods=['patch'], url_path='update_health_monitoring', detail=True)
+    def update_health_monitoring(self, request, pk):
+        patient = self.get_object()
+        health_monitoring = HealthMonitoring.objects.get(patient=patient)
+        serializer = HealthMonitoringSerializer(health_monitoring, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Đã cập nhật tình trạng sức khỏe thành công"}, status=status.HTTP_200_OK)
+
+    @action(methods=['post'], url_path='update_doctor', detail=True)
+    def update_doctor(self, request, pk=None):
+        patient = self.get_object()
+        doctors = Doctor.objects.filter(healthrecord__patient=patient).distinct()
+        health_monitoring = HealthMonitoring.objects.get(patient=patient)
+        if health_monitoring:
+            health_monitoring.doctor.set(doctors)
+            return Response({"detail": "Đã cập nhập thành công."}, status=status.HTTP_200_OK)
+        return Response({"error": "Bệnh nhân chưa có tạo theo dõi sức khỏe"}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['post'], url_path='require', detail=True)
+    def require_receipt(self, request, pk=None):
+        patient = self.get_object()
+        # patient_name = Patient.objects.get(id=patient.id)
+        # Kiểm tra xem bệnh nhân đã hoàn tất cuộc hẹn với toa thuốc chưa
+        has_prescription = Prescription.objects.filter(
+            appointment__patient=patient
+        ).exists()
+        nurse = Nurse.objects.get(position='payment_nurse')
+
+        if has_prescription:
+            notification_content = f"Yêu cầu thanh toán hóa đơn cho bệnh nhân {patient}."
+            Notification.objects.create(
+                content=notification_content,
+                type=Notification.Type.APPOINTMENT,
+                user=nurse.user # Assuming `patient` is a ForeignKey to `Patient`
+            )
+            return Response({'detail': 'Đã yêu cầu thành công.'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Bạn chưa được hoàn thành kết quả khám'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Doctor.objects.filter(user__is_active=True)
     serializer_class = DoctorSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['create_doctor', 'update_doctor']:
+            return [DoctorOwner()]
+        elif self.action in ['create_rating']:
+            return [PatientOwner()]
+        return [permissions.AllowAny()]
 
     @action(methods=['post'], url_path='create', detail=False)
     def create_doctor(self, request, pk=None):
@@ -181,17 +274,12 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return Response({"error": "User does not exist", "user": user_id}, status=status.HTTP_400_BAD_REQUEST)
-
-        if user.role == 'doctor':
-            data = request.data.copy()
-            data['user'] = user_id
-            serializer = self.get_serializer(data=data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response({"error": "Chỉ những người dùng có vai trò 'bác sĩ' mới có thể tạo thông tin bác sĩ."},
-                            status=status.HTTP_403_FORBIDDEN)
+        data = request.data.copy()
+        data['user'] = user_id
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=['patch'], url_path='update', detail=True)
     def update_doctor(self, request, pk=None):
@@ -205,10 +293,53 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
         except Doctor.DoesNotExist:
             return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
 
+    @action(methods=['get'], url_path='rating', detail=True)
+    def get_rating(self, request, pk=None):
+        doctor = self.get_object()
+        rating = Rating.objects.filter(doctor_id=doctor)
+        serializer = RatingSerializer(rating, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(methods=['post'], url_path='create_rating', detail=True)
+    def create_rating(self, request, pk=None):
+        user_id = request.user.id
+        patient = Patient.objects.get(user_id=user_id)
+
+        doctor = self.get_object()
+
+        # Kiểm tra xem bệnh nhân đã hoàn tất cuộc hẹn với toa thuốc chưa
+        has_prescription = Prescription.objects.filter(
+            appointment__patient=patient,
+            appointment__doctor=doctor
+        ).exists()
+
+        if not has_prescription:
+            return Response(
+                {"error": "Bạn chỉ có thể đánh giá một bác sĩ nếu bạn đã hoàn tất cuộc hẹn và có đơn thuốc.",
+                 "doctor": doctor},
+                status=status.HTTP_403_FORBIDDEN)
+
+        # If the patient has a prescription, proceed to create the rating
+        data = request.data.copy()
+        data['patient'] = patient.id
+        data['doctor'] = doctor.id
+        serializer = RatingSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        # Tuần tự hóa đối tượng doctor để bao gồm trong phản hồi (nếu cần)
+        doctor_serializer = DoctorSerializer(doctor)
+
+        return Response({
+            "rating": serializer.data,
+            "doctor": doctor_serializer.data
+        }, status=status.HTTP_201_CREATED)
+        # return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 class NurseViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Nurse.objects.filter(user__is_active=True)
     serializer_class = NurseSerializer
+    permission_classes = [NursePermission()]
 
     @action(methods=['post'], url_path='create', detail=False)
     def create_nurse(self, request):
@@ -217,21 +348,28 @@ class NurseViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIV
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return Response({"error": "User does not exist", "user": user_id}, status=status.HTTP_400_BAD_REQUEST)
-        if user.role == 'doctor':
-            data = request.data.copy()
-            data['user'] = user_id
-            serializer = self.get_serializer(data=data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response({"error": "Chỉ những người dùng có vai trò 'y tá' mới có thể tạo thông tin y tá."},
-                            status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data.copy()
+        data['user'] = user_id
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['create_appointment', 'cancel_appointment']:
+            return [PatientOwner()]
+        elif self.action in ['list_appointment', 'confirm_appointment']:
+            return [NursePermission()]
+        elif self.action in ['create_result', 'list_appointment_confirm']:
+            return [DoctorPermission()]
+        return [permissions.AllowAny()]
 
     @action(methods=['post'], url_path='create', detail=False)
     def create_appointment(self, request, pk=None):
@@ -277,7 +415,6 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
 
     @action(methods=['post'], url_path='confirm', detail=True)
     def confirm_appointment(self, request, pk=None):
-        nurse_id = request.user.id
         try:
             appointment = self.get_object()
         except Appointment.DoesNotExist:
@@ -374,12 +511,8 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
     @action(methods=['delete'], url_path='cancel', detail=True)
     def cancel_appointment(self, request, pk=None):
         appointment = self.get_object()
-        patient = Patient.objects.get(user_id=request.user.id)
-        if appointment.patient.id == patient.id:
-            appointment.delete()
-            return Response({"detail": "Đã hủy lịch hẹn thành công"}, status=status.HTTP_204_NO_CONTENT)
-        else:
-            return Response({'error': 'Chỉ có bệnh nhân tạo mới được xóa lịch hẹn này!!'}, status=status.HTTP_400_BAD_REQUEST)
+        appointment.delete()
+        return Response({"detail": "Đã hủy lịch hẹn thành công"}, status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=['post'], url_path='result', detail=True)
     def create_result(self, request, pk=None):
@@ -415,12 +548,22 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
 class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Prescription.objects.all()
     serializer_class = PrescriptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['create_prescription', 'list_medicines']:
+            return [DoctorPermission()]
+        elif self.action in ['payment']:
+            return [PaymentNursePermission()]
+        return [permissions.AllowAny()]
+
+    @action(methods=['post'], url_path='payment', detail=True)
+    def payment(self, request, pk=None):
+        return Response({'detail': 'xác thực'})
 
     @action(methods=['post'], url_path='create_medicine', detail=True)
     def create_prescription(self, request, pk=None):
         result = self.get_object()
-        user = request.user.id
-        doctor = Doctor.objects.get(user_id=user)
         medicine_id = request.data.get('medicine')
         if PrescriptionMedicine.objects.filter(prescription=result, medicine_id=medicine_id).exists():
             return Response(
@@ -440,11 +583,6 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         prescription = self.get_object()
         medicines = PrescriptionMedicine.objects.filter(prescription=prescription)
         serializer = PresciptMedicineSerializer(medicines, many=True)
-        if not hasattr(request.user, 'doctor'):
-            return Response(
-                {"detail": "Bạn không có quyền hoàn tất phiếu khám này."},
-                status=status.HTTP_403_FORBIDDEN
-            )
         # tạo thông báo kết quả cho bệnh nhân
         if prescription.doctor.id == doctor.id:
             # Tạo thông báo về kết quả khám
@@ -580,6 +718,7 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
 class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
+    permission_classes = [NotificationOwner]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -591,15 +730,10 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
 
     @action(methods=['post'], url_path='read', detail=True)
     def read_notification(self, request, pk=None):
-        user = request.user.id
-
         try:
             notification = self.get_queryset().get(pk=pk, user=request.user)
         except Notification.DoesNotExist:
             return Response({"error": "Notification not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        if notification.user_id != user:
-            return Response({"error": "Bạn không được đọc thông báo này!"}, status=status.HTTP_400_BAD_REQUEST)
 
         notification.is_read = True
         notification.save()
@@ -609,7 +743,164 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
 
 
 class MedicineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
-    queryset = Medicine.objects.filter(type='Thực phẩm chức năng')
+    queryset = Medicine.objects.all()
     serializer_class = MedicineSerializer
+    pagination_class = ItemPaginator
 
+    @action(methods=['get'], url_path='functional', detail=False)
+    def get_functional_food(self, request):
+        medicines = Medicine.objects.filter(type='Thực phẩm chức năng')
+        paginator = ItemPaginator()
+        page = paginator.paginate_queryset(medicines, request)
+        if page is not None:
+            serializer = MedicineSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        return Response(MedicineSerializer(medicines, many=True).data,
+                        status=status.HTTP_200_OK)
+
+
+class RatingViewSet(viewsets.ViewSet, generics.ListAPIView):
+    queryset = Rating.objects.all()
+    serializer_class = RatingSerializer
+    # permission_classes = [PatientOwner()]
+
+    @action(methods=['patch'], url_path='update_rating', detail=True)
+    def update_rating(self, request, pk=None):
+        user_id = request.user.id
+        try:
+            patient = Patient.objects.get(user_id=user_id)
+        except Patient.DoesNotExist:
+            return Response({"error": "User does not exist", "user": user_id}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            rating = Rating.objects.get(pk=pk, patient=patient)
+        except Rating.DoesNotExist:
+            return Response({"error": "Đánh giá này không tồn tại hoặc bạn không có quyền chỉnh sửa."},
+                            status=status.HTTP_404_NOT_FOUND)
+
+            # Cập nhật đánh giá
+        serializer = RatingSerializer(rating, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(methods=['delete'], url_path='delete_rating', detail=True)
+    def delete_rating(self, request, pk=None):
+        user_id = request.user.id
+        try:
+            patient = Patient.objects.get(user_id=user_id)
+        except Patient.DoesNotExist:
+            return Response({"error": "User does not exist", "user": user_id}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            rating = Rating.objects.get(pk=pk, patient=patient)
+        except Rating.DoesNotExist:
+            return Response({"error": "Đánh giá này không tồn tại hoặc bạn không có quyền chỉnh sửa."},
+                            status=status.HTTP_404_NOT_FOUND)
+        rating.delete()
+        return Response({"detail": "Đã xóa đánh giá thành công."}, status=status.HTTP_204_NO_CONTENT)
+
+
+class ForumQuestionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
+    queryset = ForumQuestion.objects.all()
+    serializer_class = ForumQuestionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['create_forum', 'update_forum', 'delete_forum']:
+            return [PatientOwner()]
+        return [permissions.AllowAny()]
+
+    @action(methods=['post'], url_path='create_forum', detail=False)
+    def create_forum(self, request, pk=None):
+        try:
+            user = User.objects.get(id=request.user.id)
+        except User.DoesNotExist:
+            return Response({"error": "User does not exist", "user": request.user.id},
+                            status=status.HTTP_400_BAD_REQUEST)
+        patient = Patient.objects.get(user=user)
+        data = request.data.copy()
+        data['patient'] = patient.id
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Đã tạo diễn đàn thành công", "data": serializer.data},
+                        status=status.HTTP_201_CREATED)
+
+    @action(methods=['patch'], url_path='update_forum', detail=True)
+    def update_forum(self, request, pk=None):
+        try:
+            user = User.objects.get(id=request.user.id)
+        except User.DoesNotExist:
+            return Response({"error": "User does not exist", "user": request.user.id},
+                            status=status.HTTP_400_BAD_REQUEST)
+        forum = self.get_object()
+        patient = Patient.objects.get(user=user)
+        if forum.patient.id == patient.id:
+            serializer = self.serializer_class(forum, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Bạn không có quyền thực hiện điều này'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['delete'], url_path='delete_forum', detail=True)
+    def delete_forum(self, request, pk=None):
+        try:
+            user = User.objects.get(id=request.user.id)
+        except User.DoesNotExist:
+            return Response({"error": "User does not exist", "user": request.user.id},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        forum = self.get_object()
+        patient = Patient.objects.get(user=user)
+        if forum.patient.id == patient.id:
+            forum.delete()
+            return Response({'detail': 'Đã xóa diễn đàn thành công'}, status=status.HTTP_200_OK)
+        return Response({'error': 'Bạn không có quyền thực hiện điều này'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['post'], url_path='create_answer', detail=True)
+    def create_forum_answer(self, request, pk=None):
+        try:
+            question = ForumQuestion.objects.get(id=self.get_object().id)
+        except ForumQuestion.DoesNotExist:
+            return Response({'error': 'Không tìm thấy diễn đàn'}, status=status.HTTP_404_NOT_FOUND)
+        data = request.data.copy()
+        data['user'] = request.user.id
+        data['forum_question'] = question.id
+        serializer = AnswerSerializer(data=data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['get'], url_path='list_answer', detail=True)
+    def get_answer(self, request, pk=None):
+        question_id = self.get_object().id
+        answers = ForumAnswers.objects.filter(forum_question_id=question_id)
+        serializer = ForumAnswerSerializer(answers, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class PredictView(APIView):
+    permission_classes = [PatientOwner]
+
+    def post(self, request, format=None):
+        data = request.data.get('blood_pressure', [])
+        if len(data) != 3 or any(len(day) != 2 for day in data):
+            return Response({'error': 'Invalid data'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            blood_pressure_data = []
+            for day in data:
+                systolic = float(day[0])
+                diastolic = float(day[1])
+                blood_pressure_data.extend([systolic, diastolic])
+        except ValueError:
+            return Response({'error': 'Invalid data format'}, status=status.HTTP_400_BAD_REQUEST)
+
+        predictor = HypertensionPredictor()
+        prediction = predictor.predict(blood_pressure_data)
+        return Response({'prediction': prediction})
 

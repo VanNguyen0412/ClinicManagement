@@ -144,6 +144,12 @@ class PrescriptionCreateSerializer(serializers.ModelSerializer):
 
 
 class MedicineSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        req = super().to_representation(instance)
+        if instance.image:
+            req['image'] = instance.image.url
+        return req
+
     class Meta:
         model = Medicine
         fields = '__all__'
@@ -152,11 +158,12 @@ class MedicineSerializer(serializers.ModelSerializer):
 class PreMedicineSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrescriptionMedicine
-        fields = ['id', 'dosage', 'prescription', 'medicine']
+        fields = ['id', 'dosage', 'prescription', 'medicine', 'count', 'price']
 
 
 class PresciptMedicineSerializer(serializers.ModelSerializer):
     medicine = MedicineSerializer()
+
     # prescription = PrescriptionSerializer()
     class Meta:
         model = PrescriptionMedicine
@@ -166,10 +173,58 @@ class PresciptMedicineSerializer(serializers.ModelSerializer):
 class HealthRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = HealthRecord
-        fields = ['id', 'appointment_date', 'symptom','patient', 'diagnosis', 'doctor', 'allergy_medicines']
+        fields = ['id', 'appointment_date', 'symptom', 'patient', 'diagnosis', 'doctor', 'allergy_medicines']
 
 
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
-        fields = '__all__'
+        fields = ['id', 'created_date', 'content', 'type', 'is_read', 'user']
+
+
+class RatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rating
+        fields = ['id', 'created_date', 'content', 'star', 'patient', 'doctor']
+
+
+class HealthMonitoringSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HealthMonitoring
+        fields = ['patient', 'height', 'weight', 'heart_rate', 'blood_pressure_systolic', 'blood_pressure_diastolic',
+                  'measurement_time', 'doctor']
+        read_only_fields = ['doctor']
+
+
+class ForumAnswerSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = ForumAnswers
+        fields = ['id', 'title', 'content', 'forum_question', 'created_date', 'updated_date', 'user']
+
+
+class AnswerSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ForumAnswers
+        fields = ['id', 'title', 'content', 'forum_question', 'created_date', 'updated_date', 'user']
+        extra_kwargs = {
+            'user': {'required': False}  # Đảm bảo 'user' không phải là trường bắt buộc
+        }
+
+
+class ForumQuestionSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        req = super().to_representation(instance)
+        if instance.image:
+            req['image'] = instance.image.url
+        return req
+
+    class Meta:
+        model = ForumQuestion
+        fields = ['id', 'title', 'content', 'image', 'created_date', 'updated_date', 'patient']
+        extra_kwargs = {
+            'patient': {'required': False}  # Đảm bảo 'patient' không phải là trường bắt buộc
+        }
