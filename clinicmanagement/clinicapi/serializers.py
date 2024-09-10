@@ -228,3 +228,21 @@ class ForumQuestionSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'patient': {'required': False}  # Đảm bảo 'patient' không phải là trường bắt buộc
         }
+
+
+class InvoiceSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        req = super().to_representation(instance)
+        if instance.payment_proof:
+            req['payment_proof'] = instance.payment_proof.url
+        return req
+
+    class Meta:
+        model = Invoice
+        fields = '__all__'
+
+
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = '__all__'
