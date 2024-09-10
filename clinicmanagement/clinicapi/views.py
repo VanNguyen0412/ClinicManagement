@@ -22,6 +22,7 @@ from rest_framework.views import APIView
 from .perms import *
 from .paginators import *
 
+
 # Create your views here.
 class NewsViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = News.objects.filter(is_active=True)
@@ -150,7 +151,7 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
 
     def get_permissions(self):
         if self.action in ['create_patient', 'update_patient', 'create_health_monitoring',
-                           'update_health_monitoring', 'update_doctor', 'require_receipt']:
+                           'update_health_monitoring', 'update_doctor', 'require_receipt', 'get_invoice']:
             return [PatientOwner()]
         elif self.action in ['get_health_record']:
             return [DoctorPermission()]
@@ -236,7 +237,6 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
     @action(methods=['post'], url_path='require', detail=True)
     def require_receipt(self, request, pk=None):
         patient = self.get_object()
-        # patient_name = Patient.objects.get(id=patient.id)
         # Kiểm tra xem bệnh nhân đã hoàn tất cuộc hẹn với toa thuốc chưa
         has_prescription = Prescription.objects.filter(
             appointment__patient=patient
@@ -248,11 +248,22 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
             Notification.objects.create(
                 content=notification_content,
                 type=Notification.Type.APPOINTMENT,
-                user=nurse.user # Assuming `patient` is a ForeignKey to `Patient`
+                user=nurse.user
             )
             return Response({'detail': 'Đã yêu cầu thành công.'}, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Bạn chưa được hoàn thành kết quả khám'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['get'], url_path='invoice', detail=True)
+    def get_invoice(self, request, pk=None):
+        patient = self.get_object()
+        # Kiểm tra xem bệnh nhân đã hoàn tất cuộc hẹn với toa thuốc chưa
+        prescription = Prescription.objects.get(
+            appointment__patient=patient
+        )
+        invoice = Invoice.objects.filter(prescription=prescription, is_paid=False)
+        serializer = InvoiceSerializer(invoice, many=True)
+        return Response(serializer.data)
 
 
 class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -539,7 +550,6 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
             symptom=request.data.get('symptom'),
             diagnosis=request.data.get('diagnosis'),
             allergy_medicines=request.data.get('allergy_medicines', ''),
-            # Get allergy medicines from request if available
             doctor=doctor
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -553,13 +563,24 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
     def get_permissions(self):
         if self.action in ['create_prescription', 'list_medicines']:
             return [DoctorPermission()]
-        elif self.action in ['payment']:
+        elif self.action in ['create_invoice']:
             return [PaymentNursePermission()]
         return [permissions.AllowAny()]
 
-    @action(methods=['post'], url_path='payment', detail=True)
-    def payment(self, request, pk=None):
-        return Response({'detail': 'xác thực'})
+    @action(methods=['post'], url_path='invoice', detail=True)
+    def create_invoice(self, request, pk=None):
+        prescription = self.get_object()
+        medicines = PrescriptionMedicine.objects.filter(prescription=prescription)
+        total_price = sum(medicine.price * medicine.count for medicine in medicines)
+        data = request.data.copy()
+        data['prescription'] = prescription.id
+        data['total_price'] = total_price
+
+        serializer = InvoiceSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(methods=['post'], url_path='create_medicine', detail=True)
     def create_prescription(self, request, pk=None):
@@ -763,6 +784,7 @@ class MedicineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveA
 class RatingViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = Rating.objects.all()
     serializer_class = RatingSerializer
+
     # permission_classes = [PatientOwner()]
 
     @action(methods=['patch'], url_path='update_rating', detail=True)
@@ -904,3 +926,55 @@ class PredictView(APIView):
         prediction = predictor.predict(blood_pressure_data)
         return Response({'prediction': prediction})
 
+
+class InvoiceViewSet(viewsets.ViewSet, generics.ListAPIView):
+    queryset = Invoice.objects.all()
+    serializer_class = InvoiceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['upload_payment_proof']:
+            return [PatientOwner()]
+        return [permissions.AllowAny()]
+
+    @action(methods=['post'], url_path='upload_payment_proof', detail=True)
+    def upload_payment_proof(self, request, pk=None):
+        invoice = self.get_object()
+
+        # Kiểm tra nếu đã có hình minh chứng trước đó
+        if invoice.payment_proof:
+            return Response({
+                "error": "Payment proof has already been uploaded. You cannot upload it again."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        payment_method = request.data.get('payment_method')
+        payment_proof = request.FILES.get('payment_proof')  # Giả định file tải lên nằm trong FILES
+
+        # Kiểm tra phương thức thanh toán và hình minh chứng
+        if not payment_method or not payment_proof:
+            return Response({"error": "Missing payment_method or payment_proof"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Cập nhật hóa đơn
+        invoice.payment_method = payment_method
+        invoice.payment_proof = payment_proof
+        price = invoice.total_price + invoice.consultation_fee
+        invoice.is_paid = True
+        invoice.save()
+
+        # Tạo bản ghi Payment
+        payment = Payment.objects.create(
+            invoice=invoice,
+            payment_method=payment_method,
+            amount=price
+        )
+
+        # Trả về phản hồi thành công
+        return Response({
+            "message": "Payment proof uploaded successfully",
+            "invoice_id": invoice.id,
+            "is_paid": invoice.is_paid,
+            "payment_method": invoice.payment_method,
+            "payment": PaymentSerializer(payment)
+        }, status=status.HTTP_200_OK)
+
+    # @action(methods=['get'], url_path='')
