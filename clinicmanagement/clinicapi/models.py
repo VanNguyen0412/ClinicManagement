@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 import random
 
@@ -119,7 +121,7 @@ class HealthRecord(models.Model):
     appointment_date = models.DateTimeField()
     symptom = models.TextField()
     diagnosis = models.TextField()
-    allergy_medicines = models.TextField() # thuốc bị dị ứng
+    allergy_medicines = models.TextField()  # thuốc bị dị ứng
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -156,7 +158,7 @@ class PrescriptionMedicine(BaseModel):
     dosage = models.CharField(max_length=255)  # liều dùng
     count = models.IntegerField(default=10)
     price = models.FloatField(default=15000)
-    
+
 
 class Rating(BaseModel):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
@@ -204,22 +206,41 @@ class News(BaseModel):
         return self.title
 
 
-class Payment(BaseModel):
-    amount = models.FloatField()
+class Invoice(models.Model):
+    prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    invoice_number = models.CharField(max_length=12, default=uuid.uuid4().hex[:12].upper())  # Tạo số hóa đơn ngẫu nhiên
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=100000)  # Tiền khám cố định 100k
+    payment_proof = CloudinaryField(null=True, blank=True)  # Lưu hình minh chứng thanh toán
 
-    class Method(models.TextChoices):
-        MONO = 'mono'
+    class PAYMENT_CHOICES(models.TextChoices):
+        MOMO = 'momo'
         ZALOPAY = 'zalopay'
         OFFLINE = 'offline'
 
-    class Status(models.TextChoices):
-        PENDING = 'pending'
-        COMPLETED = 'completed'
-        FAILED = 'failed'
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES, null=True, blank=True)
+    is_paid = models.BooleanField(default=False)
 
-    method = models.CharField(max_length=255, choices=Method.choices, default=Method.OFFLINE)
-    status = models.CharField(max_length=255, choices=Status.choices, default=Status.PENDING)
-    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE)
+    def calculate_total(self, medicines):
+        """Tính tổng tiền thuốc cộng với tiền khám"""
+        total_medicine_cost = sum(medicine.price * medicine.count for medicine in medicines)
+        self.total_price = total_medicine_cost + self.consultation_fee
+        self.save()
+
+    def __str__(self):
+        return f"Invoice {self.invoice_number} for {self.prescription}"
+
+
+class Payment(models.Model):
+    invoice = models.OneToOneField(Invoice, on_delete=models.CASCADE, related_name='payment')
+    payment_method = models.CharField(max_length=20, choices=Invoice.PAYMENT_CHOICES,
+                                      default=Invoice.PAYMENT_CHOICES.OFFLINE)
+    payment_date = models.DateTimeField(auto_now_add=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=1000000)
+
+    def __str__(self):
+        return f"Payment for Invoice {self.invoice}"
 
 
 class Report(models.Model):
