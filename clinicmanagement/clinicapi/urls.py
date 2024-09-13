@@ -15,6 +15,7 @@ r.register('notification', views.NotificationViewSet, 'notification')
 r.register('medicine', views.MedicineViewSet, 'medicine')
 r.register('rating', views.RatingViewSet, 'rating')
 r.register('forum', views.ForumQuestionViewSet, 'forum')
+r.register('invoice', views.InvoiceViewSet, 'invoice')
 
 
 urlpatterns = [
