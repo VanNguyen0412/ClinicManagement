@@ -90,7 +90,7 @@ class NurseAdmin(admin.ModelAdmin):
 
 
 class MedicineAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'price', 'exp_date', 'mfg_date', 'type', 'unit', 'edit']
+    list_display = ['id', 'name', 'price', 'exp_date', 'mfg_date', 'type', 'unit', 'uses', 'howtouse', 'edit']
     search_fields = ['name']
 
     def edit(self, obj):

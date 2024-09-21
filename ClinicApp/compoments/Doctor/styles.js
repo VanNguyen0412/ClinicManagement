@@ -7,7 +7,14 @@ container: {
 },
 scrollContainer: {
     padding: 13,
-    marginTop:10
+},
+title1: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    marginTop: 25,
+    textAlign: 'center',
+    fontFamily: 'serif'
 },
 title: {
     fontSize: 24,
@@ -15,13 +22,15 @@ title: {
     marginBottom: 10,
     marginTop: 25,
     textAlign: 'center',
-    flex: 3
+    flex: 3,
+    fontFamily: 'serif'
 },
 subTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginTop: 10,
     marginBottom: 10,
+    fontFamily: 'serif'
 },
 input: {
     borderWidth: 1,
@@ -29,6 +38,7 @@ input: {
     borderRadius: 5,
     padding: 10,
     marginBottom: 15,
+    fontFamily: 'serif'
 },
 inputMedicine: {
     borderWidth: 1,
@@ -36,6 +46,8 @@ inputMedicine: {
     borderRadius: 5,
     padding: 10,
     marginTop: 15,
+    fontFamily: 'serif'
+
 },
 button: {
     backgroundColor: '#8B4513',
@@ -57,12 +69,14 @@ buttonText1: {
     color: '#FFF',
     fontWeight: 'bold',
     fontSize: 15,
+    fontFamily: 'serif'
 },
 name: {
     fontSize: 16,
     marginBottom: 5,
     fontWeight: '400',
-    marginLeft: 15
+    marginLeft: 15,
+    fontFamily: 'serif'
 },
 containerRecord: {
     flex: 1,
@@ -74,6 +88,7 @@ titleRecord: {
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
+    fontFamily: 'serif'
 },
 recordCard: {
     padding: 15,
@@ -85,6 +100,8 @@ recordCard: {
 },
 recordText: {
     fontSize: 16,
+    fontFamily: 'serif',
+    marginBottom: 4
 },
 backButtonRecord: {
     marginTop: 20,
@@ -101,12 +118,14 @@ infoText: {
     fontSize: 16,
     marginBottom: 5,
     fontWeight: '400',
-    marginLeft: 15
+    marginLeft: 15,
+    fontFamily: 'serif'
 },
 label: {
     fontSize: 16,
     marginBottom: 5,
     fontWeight: '600',
+    fontFamily: 'serif'
 },
 header: {
     height: 60,
@@ -133,6 +152,7 @@ headerTitle: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'serif'
 },
 profileContainer: {
     padding: 20,
@@ -149,6 +169,7 @@ doctorName: {
     fontSize: 22,
     fontWeight: 'bold',
     textAlign: 'center',
+    fontFamily: 'serif'
 },
 details: {
     marginTop: 10,
@@ -161,16 +182,19 @@ detailItem: {
 detailText: {
     marginLeft: 10,
     fontSize: 15,
+    fontFamily: 'serif'
 },
 
 sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 10,
+    fontFamily: 'serif'
 },
 
 introduction: {
     marginBottom: 7,
+    fontFamily: 'serif'
 },
 toggleText: {
     color: '#8B4513',
@@ -218,6 +242,7 @@ buttonText: {
     color: '#835741',
     fontSize: 15,
     fontWeight: 'bold',
+    fontFamily: 'serif'
 },
 ratingContainer: {
     flexDirection: 'row',
@@ -231,6 +256,7 @@ rating: {
 reviewCount: {
     fontSize: 14,
     color: '#888',
+    fontFamily: 'serif'
 },
 iccon: {
     color:"#835741",
@@ -241,18 +267,24 @@ tableHeader: {
     backgroundColor: '#ffffff',
     height: 50, 
     borderBlockColor: '#333',
+    fontFamily: 'serif'
+
 },
 tableTitle1: {
     flex: 4,
     overflow: 'hidden',
     textAlign: 'center',
     fontWeight: 'bold',
+    fontFamily: 'serif'
+
 },
 tableTitle3: {
     flex: 1,
     overflow: 'hidden',
     textAlign: 'center',
     fontWeight: 'bold',
+    fontFamily: 'serif'
+
 },
 tableRow: {
     backgroundColor: '#ffffff',
@@ -260,9 +292,12 @@ tableRow: {
 },
 tableCell1: {
     flex: 3,
+    fontFamily: 'serif'
 },
 tableCell3: {
     flex: 1,
+    fontFamily: 'serif'
+
 },
 modalView: {
     margin: 20,
@@ -290,10 +325,13 @@ modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
-    textAlign: 'center'
+    textAlign: 'center',
+    fontFamily: 'serif'
 },
 modalText: {
     marginBottom: 5,
+    fontFamily: 'serif'
+
 },
 closeButton: {
     paddingVertical: 12,
@@ -319,6 +357,7 @@ closeButtonText: {
     color: '#835741',
     fontSize: 15,
     fontWeight: 'bold',
+    fontFamily: 'serif'
 },
 modalOverlay: {
     position: 'absolute',
@@ -334,7 +373,6 @@ addMedicineContainer: {
 },
 
 addButton: {
-    
     alignItems: 'center',
     paddingVertical: 8,
     borderWidth: 2,
@@ -342,8 +380,9 @@ addButton: {
     borderRadius: 5,
     marginVertical: 10,
     justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
+    width: '50%',
+    alignSelf: 'center'
+
 },
 addButtonText: {
     color: 'white',
@@ -361,5 +400,166 @@ marginMedicine: {
 },
 iconContainer: {
     justifyContent: 'center'
+},
+row: {
+    flex: 1,
+    justifyContent: 'space-between',
+    marginBottom: 50,
+},
+card: {
+    backgroundColor: '#F9F9F9',
+    borderRadius: 8,
+    padding: 15,
+    flex: 1,
+    marginHorizontal: 5,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#835741',
+},
+cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+},
+patientName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+    fontFamily: 'serif'
+},
+starContainer: {
+    flexDirection: 'row',
+    marginBottom: 3
+},
+content: {
+    fontSize: 14,
+    color: '#555',
+    fontFamily: 'serif'
+},
+seeAll:{
+    fontSize: 15,
+    color: 'blue',
+    marginTop: 5,
+    fontFamily: 'serif'
+},
+containerList: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    padding: 16,
+},
+headerList: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    marginTop: 30
+},
+titleList: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 75,
+    fontFamily: 'serif'
+},
+filterIconList: {
+    position: 'absolute',
+    right: 0,
+},
+searchContainerList: {
+    flexDirection: 'row',
+    borderColor: '#835741',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 8,
+    alignItems: 'center',
+    marginBottom: 15,
+},
+searchInputList: {
+    flex: 1,
+    fontSize: 16,
+    marginLeft: 8,
+    fontFamily: 'serif'
+},
+tabsContainerList: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    flexWrap: 'wrap',
+
+},
+tabList: {
+    backgroundColor: '#e6c4a8',
+    borderWidth: 1,
+    borderColor: '#835741',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginRight: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10
+},
+tabInactiveList: {
+    backgroundColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#835741',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    marginRight: 10,
+    marginBottom: 10
+},
+tabTextList: {
+    color: 'black',
+    fontFamily: 'serif'
+},
+cardList: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+    elevation: 3,
+},
+avatarList: {
+    marginTop: 17,
+    width: 90,
+    height: 90,
+    borderRadius: 32,
+
+},
+cardInfoList: {
+    marginLeft: 16,
+    flex: 1,
+},
+nameList: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    fontFamily: 'serif'
+},
+ratingRowList: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 4,
+},
+ratingList: {
+    marginLeft: 5,
+    color: 'orange',
+    fontFamily: 'serif'
+},
+reviewsList: {
+    marginLeft: 5,
+    color: 'gray',
+    fontFamily: 'serif'
+
+},
+positionList: {
+    color: 'gray',
+    marginBottom: 5,
+    fontFamily: 'serif'
+},
+locationList: {
+    color: 'gray',
+    fontSize: 12,
+    marginBottom: 5,
+    fontFamily: 'serif'
 },
 });

@@ -1,13 +1,15 @@
 import { useNavigation } from "@react-navigation/native";
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { View, Text, Image, TextInput, StyleSheet, ScrollView,
      Animated, Dimensions, TouchableOpacity, Modal,
      FlatList} from 'react-native';
 import { FontAwesome } from "@expo/vector-icons";
 import styles from "./styles";
+import { MyUserContext } from "../../configs/Context";
 
 const HomeDoctor = () => {
     const nav = useNavigation()
+    const user = useContext(MyUserContext);
     const { width } = Dimensions.get('window');
     const scrollX = useRef(new Animated.Value(0)).current;
     const scrollViewRef = useRef(null);
@@ -95,7 +97,7 @@ const HomeDoctor = () => {
         <ScrollView style={styles.container}>
             <View style={styles.headerContainer}>
                 <View>
-                    <Text style={styles.username}>Tên Người Dùng</Text>
+                    <Text style={styles.username}>{user.username}</Text>
                     <Text style={styles.email}>email@example.com</Text>
                 </View>
                 <Image
@@ -142,9 +144,9 @@ const HomeDoctor = () => {
                         scrollEventThrottle={16}
                     >
                         {banners.map((banner, index) => (
-                            <View key={index} style={{ width }}>
+                            <TouchableOpacity key={index} style={{ width }} onPress={() => nav.navigate("Home")}>
                                 <Image source={{ uri: banner.url }} style={styles.imageBanner} />
-                            </View>
+                            </TouchableOpacity>
                         ))}
                     </Animated.ScrollView>
 

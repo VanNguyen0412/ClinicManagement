@@ -5,6 +5,7 @@ import { FontAwesome } from "@expo/vector-icons";
 import { Appbar, DataTable } from "react-native-paper";
 import { useState } from "react";
 import DropDownPicker from 'react-native-dropdown-picker';
+import MyStyles from "../../styles/MyStyles";
 
 
 const CreatePresciption = ({onBack, patientInfo }) => {
@@ -96,9 +97,16 @@ const CreatePresciption = ({onBack, patientInfo }) => {
 
     return (
         <>
-        <View style={styles.header1}>
-                <FontAwesome name="angle-left" size={35} style={{marginTop: 25}} onPress={onBack}/>
-                <Text style={styles.title}>Kê Toa Thuốc</Text>
+        <View style={MyStyles.headerList}>
+                <TouchableOpacity onPress={onBack}>
+                <FontAwesome name="arrow-left" size={24} color="#835741" />
+                </TouchableOpacity>
+                <View>
+                <Text style={MyStyles.titleList}>Kê Toa Thuốc</Text>
+                </View>
+                <TouchableOpacity>
+                <FontAwesome name="phone" size={24} color="#835741" />
+                </TouchableOpacity>
         </View>
         <ScrollView contentContainerStyle={styles.scrollContainer}>
             

@@ -21,6 +21,8 @@ from .prediction import HypertensionPredictor
 from rest_framework.views import APIView
 from .perms import *
 from .paginators import *
+from django.utils import timezone
+from datetime import timedelta
 
 
 # Create your views here.
@@ -58,7 +60,7 @@ class NewsViewSet(viewsets.ViewSet, generics.ListAPIView):
         return Response({'detail': 'Đã xóa thành công.'}, status=status.HTTP_200_OK)
 
 
-class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView):
+class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -106,7 +108,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView
     def verify_otp(self, request, pk=None):
         # Lấy usename và mã OTP từ request
         username = request.data.get('username')
-        otp_code = request.data.get('otp_code')
+        otp_code = request.data.get('otp')
         if not otp_code or not username:
             return Response(
                 data={"message": "Mã OTP và username là bắt buộc."},
@@ -144,7 +146,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView
             )
 
 
-class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
+class PatientViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = Patient.objects.filter(user__is_active=True)
     serializer_class = PatientSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -156,6 +158,27 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
         elif self.action in ['get_health_record']:
             return [DoctorPermission()]
         return [permissions.AllowAny()]
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        user = self.request.query_params.get('user')
+        if user:
+            queryset = queryset.filter(user_id=user)
+        return queryset
+
+    @action(detail=False, methods=['get'], url_path='current')
+    def get_patient_by_user(self, request):
+        user_id = request.query_params.get('user')
+        try:
+            user = User.objects.get(id=user_id)
+            patient = Patient.objects.get(user=user)
+            serializer = self.get_serializer(patient)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Patient.DoesNotExist:
+            return Response({'error': 'Patient not found'}, status=status.HTTP_404_NOT_FOUND)
 
     @action(methods=['post'], url_path='create', detail=False)
     def create_patient(self, request, pk=None):
@@ -188,7 +211,7 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
     def get_health_record(self, request, pk=None):
         patient = self.get_object()
         health_records = HealthRecord.objects.filter(patient_id=patient)
-        serializer = HealthRecordSerializer(health_records, many=True)
+        serializer = HealthRecordViewSerializer(health_records, many=True)
         return Response(serializer.data)
 
     @action(methods=['get'], url_path='health_monitoring', detail=True)
@@ -308,7 +331,22 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
     def get_rating(self, request, pk=None):
         doctor = self.get_object()
         rating = Rating.objects.filter(doctor_id=doctor)
-        serializer = RatingSerializer(rating, many=True)
+
+        # Áp dụng phân trang
+        paginator = RatingPaginator()
+        paginated_ratings = paginator.paginate_queryset(rating, request)
+
+        # Sử dụng serializer với dữ liệu đã phân trang
+        serializer = RatingDetailSerializer(paginated_ratings, many=True)
+
+        # Trả về dữ liệu phân trang
+        return paginator.get_paginated_response(serializer.data)
+
+    @action(methods=['get'], url_path='ratingall', detail=True)
+    def get_rating_all(self, request, pk=None):
+        doctor = self.get_object()
+        rating = Rating.objects.filter(doctor_id=doctor)
+        serializer = RatingDetailAllSerializer(rating, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(methods=['post'], url_path='create_rating', detail=True)
@@ -327,7 +365,7 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
         if not has_prescription:
             return Response(
                 {"error": "Bạn chỉ có thể đánh giá một bác sĩ nếu bạn đã hoàn tất cuộc hẹn và có đơn thuốc.",
-                 "doctor": doctor},
+                 "doctor": DoctorSerializer(doctor).data},  # Serialize doctor here
                 status=status.HTTP_403_FORBIDDEN)
 
         # If the patient has a prescription, proceed to create the rating
@@ -337,14 +375,15 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
         serializer = RatingSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        # Tuần tự hóa đối tượng doctor để bao gồm trong phản hồi (nếu cần)
-        doctor_serializer = DoctorSerializer(doctor)
 
-        return Response({
-            "rating": serializer.data,
-            "doctor": doctor_serializer.data
-        }, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
         # return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(methods=['get'], url_path='name', detail=False)
+    def get_doctor_name(self, request):
+        doctors = self.get_queryset()  # Lấy toàn bộ danh sách bác sĩ
+        serializer = DoctorNameSerializer(doctors, many=True)  # Serialize danh sách
+        return Response(serializer.data)
 
 
 class NurseViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -368,13 +407,13 @@ class NurseViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIV
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
+class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
-        if self.action in ['create_appointment', 'cancel_appointment']:
+        if self.action in ['create_appointment', 'cancel_appointment', 'get_appoint_patient']:
             return [PatientOwner()]
         elif self.action in ['list_appointment', 'confirm_appointment']:
             return [NursePermission()]
@@ -406,20 +445,22 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
         except Nurse.DoesNotExist:
             return Response({"error": "Nurse not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        data = request.data.get('date')
+        # Lấy ngày hôm qua
+        yesterday = timezone.now() - timedelta(days=1)
+
         doctor_id = nurse.doctor_id
-        appointments = Appointment.objects.filter(doctor_id=doctor_id, appointment_date=data,
+        appointments = Appointment.objects.filter(doctor_id=doctor_id, appointment_date__gte=yesterday.date(),
                                                   status=Appointment.Status.PENDING)
         serializer = AppointmentSerializer(appointments, many=True)
         return Response(serializer.data)
 
     @action(methods=['get'], url_path='listconfirm', detail=False)
     def list_appointment_confirm(self, request, pk=None):
-        data = request.data.get('date')
+        yesterday = timezone.now() - timedelta(days=1)
         user = request.user.id
         doctor = Doctor.objects.get(user_id=user)
 
-        appointments = Appointment.objects.filter(doctor_id=doctor.id, appointment_date=data,
+        appointments = Appointment.objects.filter(doctor_id=doctor.id, appointment_date__gte=yesterday.date(),
                                                   status=Appointment.Status.CONFIRM)
         serializer = AppointmentSerializer(appointments, many=True)
         return Response(serializer.data)
@@ -553,6 +594,13 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
             doctor=doctor
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(methods=['get'], url_path='patient', detail=False)
+    def get_appoint_patient(self, request, pk=None):
+        patient = Patient.objects.get(user_id=request.user.id)
+        appointments = Appointment.objects.filter(patient_id=patient.id)
+        serializer = AppointmentSerializer(appointments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -748,6 +796,13 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         if user:
             queryset = queryset.filter(user_id=user)
         return queryset
+
+    @action(methods=['get'], url_path='list', detail=False)
+    def get_notification_user(self, request, pk=None):
+        notification = Notification.objects.filter(user_id=request.user.id)
+
+        serializer = NotificationSerializer(notification, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(methods=['post'], url_path='read', detail=True)
     def read_notification(self, request, pk=None):
@@ -978,3 +1033,8 @@ class InvoiceViewSet(viewsets.ViewSet, generics.ListAPIView):
         }, status=status.HTTP_200_OK)
 
     # @action(methods=['get'], url_path='')
+
+
+class DoctorRatingViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Doctor.objects.all()
+    serializer_class = DoctorRatingSerializer

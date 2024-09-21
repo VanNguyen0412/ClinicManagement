@@ -147,6 +147,8 @@ class Medicine(models.Model):
     price = models.FloatField(null=True)
     type = models.TextField()
     unit = models.CharField(max_length=255, default='Viên')
+    uses = models.TextField(default='Tăng cường sức khỏe')
+    howtouse = models.TextField(default='Trẻ em ăn kém, biếng ăn, chán ăn, hấp thu dinh dưỡng kém. ')
 
     def __str__(self):
         return self.name

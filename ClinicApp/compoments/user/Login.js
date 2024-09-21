@@ -1,14 +1,20 @@
 import { useNavigation } from "@react-navigation/native";
 import { useState } from "react";
-import { Button, TextInput, TouchableOpacity, View, Text, ImageBackground } from "react-native";
+import { Button, TextInput, TouchableOpacity, View, Text, ImageBackground, Image, Modal } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import styleUser from "./styleUser";
+import { useContext } from "react";
+import { MyDispatchContext } from "../../configs/Context";
+import APIs, { authApi, endpoints } from "../../configs/APIs";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import MyStyles from "../../styles/MyStyles";
+import { ActivityIndicator } from "react-native-paper";
 
-const Login = () => {
+const Login = ({ navigation, route }) => {
     const [user, setUser] = useState({});
     const [loading, setLoading] = useState(false);
     const nav = useNavigation();
-    // const dispatch = useContext(MyDispatchContext);
+    const dispatch = useContext(MyDispatchContext);
     const [showPassword, setShowPassword] = useState(true);
 
     const fields = [{
@@ -30,7 +36,42 @@ const Login = () => {
             return {...current, [field]: value}
         })
     }
-  
+
+    const login = async () => {
+        setLoading(true);
+        try {
+            let res = await APIs.post(endpoints['login'], {
+                ...user, 
+                'client_id': 'Tb1JGVGg4Ew1bWMAdlWh7UdyQaefMl8Uc3QxLmQI',
+                'client_secret': '9mMKrSHbjNKmRiEQMyJajVbHwuhW9x7RQQieD7bOowG4mmkZOXU5X5ZxCs6RIoLc2WSwUCraLuCvqovDAugvmvJsStMPYlzQvgMbNEuci4vJJfNO2DznQi9zbPtCO3wm',
+                'grant_type': 'password'
+            });
+            await AsyncStorage.setItem("token", res.data.access_token);
+            console.info(res.data.access_token)
+            setTimeout(async () => {
+                let user = await authApi(res.data.access_token).get(endpoints['current-user']);
+                console.info(user.data);
+                
+                dispatch({
+                    "type": "login",
+                    "payload": user.data
+                })
+            }, 100);
+        } catch (ex) {
+            console.error(
+                "Error response:",
+                ex.response ? ex.response.data : ex.message
+            );
+              Alert.alert("Cảnh báo", "Tên đăng nhập hoặc mật khẩu không hợp lệ!!!", [
+                {
+                  text: "OK",
+                  onPress: () => {},
+                },
+              ]);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     return (
         <ImageBackground style={styleUser.container} source={require('./images/Clinic2.png')}>
@@ -70,7 +111,7 @@ const Login = () => {
                     </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity style={styleUser.backgroundButton} onPress={() => nav.navigate('HomeDoctor')}>
+                <TouchableOpacity style={styleUser.backgroundButton} onPress={login}>
                     <Text style={styleUser.buttonLogin}>Đăng nhập</Text>
                 </TouchableOpacity>
 
@@ -82,6 +123,21 @@ const Login = () => {
                 <Text style={styleUser.footerText}>Bản quyền © 2024</Text>
                 </View>
             </View>
+            {loading && (
+                <Modal
+                    transparent={true}
+                    animationType="fade"
+                    visible={loading}
+                >
+                    <View style={MyStyles.loadingContainer}>
+                        <View style={MyStyles.overlay} />
+                        <View style={MyStyles.logoContainer}>
+                            <Image source={{uri: 'https://res.cloudinary.com/dr9h3ttpy/image/upload/v1726585796/logo1.png'}} style={MyStyles.logo} />
+                        </View>
+                        <ActivityIndicator size="small" color="#ffffff" />
+                    </View>
+                </Modal>
+            )}
         </ImageBackground>
     );
 }

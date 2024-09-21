@@ -20,7 +20,9 @@ export default StyleSheet.create({
         marginBottom: 10,
         marginTop: 25,
         textAlign: 'center',
-        flex: 3
+        flex: 3,
+        fontFamily: 'serif'
+
     },
     scrollContainer: {
         padding: 13,
@@ -30,14 +32,24 @@ export default StyleSheet.create({
         fontSize: 16,
         marginBottom: 5,
         fontWeight: '600',
+        fontFamily: 'serif'
+
     },
     input: {
         borderWidth: 1,
         borderColor: '#8B4513',
         borderRadius: 5,
+        marginTop: 7,
         padding: 10,
         marginBottom: 15,
-        width: '95%'
+        width: '95%',
+        fontFamily: 'serif'
+
+    },
+    inputDate: {
+        padding: 5,
+        width: '85%',
+        color: 'black'
     },
     option: {
         backgroundColor: '#fff',
@@ -45,7 +57,7 @@ export default StyleSheet.create({
         borderRadius: 5,
         width: '40%',
         alignItems: 'center',
-        marginVertical: 7,
+        marginTop: 7,
         borderWidth: 1,
         borderColor: '#8B4513',
     },
@@ -55,6 +67,8 @@ export default StyleSheet.create({
     },
     optionText: {
         fontSize: 18,
+        fontFamily: 'serif'
+
     },
     button: {
         backgroundColor: '#8B4513',
@@ -67,5 +81,19 @@ export default StyleSheet.create({
         color: '#FFF',
         fontWeight: 'bold',
         fontSize: 15,
+        fontFamily: 'serif'
+
+    },
+    fieldTextinput:{
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 5,
+        borderWidth: 1,
+        marginBottom: 15,
+        marginTop: 7,
+        borderColor: '#8B4513',
+        padding: 5,
+        width: '95%'
+        
     },
 })

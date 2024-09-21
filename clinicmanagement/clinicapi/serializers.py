@@ -4,6 +4,7 @@ from django.db import IntegrityError
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework import serializers
+from django.db.models import Avg, Count
 
 User = get_user_model()
 
@@ -43,6 +44,17 @@ class UserSerializer(serializers.ModelSerializer):
             "password": {
                 "write_only": True,
             },
+        }
+
+
+class PatientDetailSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = Patient
+        fields = ['id', 'first_name', 'last_name', 'user']
+        extra_kwargs = {
+            'user': {'required': False}  # Đảm bảo 'user' không phải là trường bắt buộc
         }
 
 
@@ -97,6 +109,8 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
 
 
 class DoctorSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
     class Meta:
         model = Doctor
         fields = ['id', 'first_name', 'last_name', 'birthdate', 'expertise', 'qualifications',
@@ -176,6 +190,15 @@ class HealthRecordSerializer(serializers.ModelSerializer):
         fields = ['id', 'appointment_date', 'symptom', 'patient', 'diagnosis', 'doctor', 'allergy_medicines']
 
 
+class HealthRecordViewSerializer(serializers.ModelSerializer):
+    doctor = DoctorNameSerializer()
+    patient = PatientNameSerializer()
+
+    class Meta:
+        model = HealthRecord
+        fields = ['id', 'appointment_date', 'symptom', 'patient', 'diagnosis', 'doctor', 'allergy_medicines']
+
+
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
@@ -183,6 +206,22 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 
 class RatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rating
+        fields = ['id', 'created_date', 'content', 'star', 'patient', 'doctor']
+
+
+class RatingDetailSerializer(serializers.ModelSerializer):
+    patient = PatientSerializer()
+
+    class Meta:
+        model = Rating
+        fields = ['id', 'created_date', 'content', 'star', 'patient', 'doctor']
+
+
+class RatingDetailAllSerializer(serializers.ModelSerializer):
+    patient = PatientDetailSerializer()
+
     class Meta:
         model = Rating
         fields = ['id', 'created_date', 'content', 'star', 'patient', 'doctor']
@@ -205,7 +244,6 @@ class ForumAnswerSerializer(serializers.ModelSerializer):
 
 
 class AnswerSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ForumAnswers
         fields = ['id', 'title', 'content', 'forum_question', 'created_date', 'updated_date', 'user']
@@ -246,3 +284,22 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = '__all__'
+
+
+class DoctorRatingSerializer(serializers.ModelSerializer):
+    average_rating = serializers.SerializerMethodField()
+    total_ratings = serializers.SerializerMethodField()
+    user = UserSerializer()
+
+    class Meta:
+        model = Doctor
+        fields = ['id', 'first_name', 'last_name', 'birthdate', 'expertise', 'qualifications',
+                  'experience_years', 'position', 'description', 'user', 'average_rating',
+                  'total_ratings']
+
+    def get_average_rating(self, obj):
+        avg_rating = Rating.objects.filter(doctor=obj).aggregate(average=Avg('star'))['average']
+        return round(avg_rating, 2) if avg_rating else 0
+
+    def get_total_ratings(self, obj):
+        return Rating.objects.filter(doctor=obj).count()

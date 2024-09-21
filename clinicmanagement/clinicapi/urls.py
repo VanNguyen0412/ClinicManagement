@@ -16,7 +16,7 @@ r.register('medicine', views.MedicineViewSet, 'medicine')
 r.register('rating', views.RatingViewSet, 'rating')
 r.register('forum', views.ForumQuestionViewSet, 'forum')
 r.register('invoice', views.InvoiceViewSet, 'invoice')
-
+r.register(r'doctorRating', views.DoctorRatingViewSet, 'doctorRating')
 
 urlpatterns = [
     path('', include(r.urls)),

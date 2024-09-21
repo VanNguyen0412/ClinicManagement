@@ -8,11 +8,13 @@ container: {
 username: {
     fontSize: 24,
     fontWeight: 'bold',
+    fontFamily: 'serif'
 },
 email: {
     fontSize: 16,
     color: '#666',
     marginBottom: 10,
+    fontFamily: 'serif'
 },
 avatarContainer: {
     alignItems: 'center',
@@ -41,6 +43,7 @@ input: {
     borderRadius: 5,
     paddingHorizontal: 10,
     marginTop: 5,
+    fontFamily: 'serif'
 },
 iconGrid: {
     flexDirection: 'row',
@@ -49,7 +52,7 @@ iconGrid: {
     marginBottom: 20,
 },
 iconBox: {
-    width: '30%',
+    width: '33%',
     alignItems: 'center',
     padding: 10,
     borderWidth: 1,
@@ -68,10 +71,12 @@ newsImageContainer: {
 newsText: {
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'serif'
 },
 categoryText: {
     fontSize: 18,
     marginBottom: 10,
+    fontFamily: 'serif'
     // marginRight: 30
 },
 categoryContainer: {
@@ -92,7 +97,7 @@ seeAll: {
     textAlign: 'center',
     // fontWeight: 'bold',
     color: '#007BFF',
-
+    fontFamily: 'serif'
 },
 headerContainer: {
     flexDirection: 'row',
@@ -110,7 +115,7 @@ leftArrow: {
 },
 imageBanner: {
     width: '100%',
-    height: 150,
+    height: 180,
     resizeMode: 'cover',
 },
 rightArrow: {
@@ -136,13 +141,14 @@ indicator: {
     marginLeft: 7,
 },
 drugImage: {
-    width: 70,
-    height: 70,
+    width: 100,
+    height: 120,
     borderRadius: 5,
     marginBottom: 5,
 },
 drugName: {
     textAlign: 'center',
+    fontFamily: 'serif'
 },
 medicineBox: {
     width: '48%',
@@ -154,7 +160,7 @@ medicineBox: {
     borderRadius: 10,
     marginBottom: 10,
     backgroundColor: '#fff',
-    marginRight: 13
+    marginRight: 3
 },
 modalView: {
     margin: 20,
@@ -172,6 +178,22 @@ modalView: {
     elevation: 5,
     marginTop: 190
 },
+modalPateint: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 25,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+        width: 0,
+        height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    marginTop: 300
+},
 modalImage: {
     width: 150,
     height: 150,
@@ -182,10 +204,17 @@ modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
-    textAlign: 'center'
+    textAlign: 'center',
+    fontFamily: 'serif'
 },
 modalText: {
     marginBottom: 5,
+    fontFamily: 'serif'
+},
+modalText1: {
+    marginBottom: 5,
+    fontSize: 16,
+    fontFamily: 'serif'
 },
 closeButton: {
     paddingVertical: 12,
@@ -212,6 +241,7 @@ closeButtonText: {
     color: '#835741',
     fontSize: 15,
     fontWeight: 'bold',
+    fontFamily: 'serif'
 },
 modalOverlay: {
     position: 'absolute',
@@ -220,5 +250,19 @@ modalOverlay: {
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.5)', // Màu mờ
+},
+margin: {
+    flex: 1,
+    padding: 13,
+    backgroundColor: '#fff',
+    borderColor:'#835741',
+    borderWidth: 1,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
+    marginBottom:10,
+    width: '50%'
 },
 });

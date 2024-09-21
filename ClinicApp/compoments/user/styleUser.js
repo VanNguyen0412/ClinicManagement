@@ -23,16 +23,22 @@ fieldTextinput:{
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    fontFamily: 'serif'
+
 },
 textInput: {
     flex: 1, 
     padding: 10, 
     fontSize: 16,
+    fontFamily: 'serif'
+
 },
 buttonLogin: { 
     color: '#835741',
     fontSize: 15,
     fontWeight: 'bold',
+    fontFamily: 'serif'
+
 },
 backgroundButton: {
     paddingVertical: 12,
@@ -53,6 +59,8 @@ linksContainer: {
 linkText: {
     color: '#ac6e37',
     fontSize: 14,
+    fontFamily: 'serif'
+
 },
 footer: {
     flexDirection: 'row',
@@ -63,6 +71,8 @@ footer: {
 footerText: {
     color: '#999',
     fontSize: 14,
+    fontFamily: 'serif'
+
 },
 margin: {
     marginRight: 15
@@ -70,7 +80,9 @@ margin: {
 avatarText: {
     color: '#ac6e37',
     fontSize: 15,
-    margin: 10
+    margin: 10,
+    fontFamily: 'serif'
+
 },
 
 registerText: {
@@ -81,6 +93,8 @@ registerText: {
     textAlign: 'center', 
     fontFamily: 'serif', 
     paddingBottom: 20,
+    fontFamily: 'serif'
+
 },
 title: {
     fontSize: 60,
@@ -89,7 +103,9 @@ title: {
     fontStyle: 'italic',
     textAlign:'center',
     paddingBottom: 20,
-    paddingTop: 10
+    paddingTop: 10,
+    fontFamily: 'serif'
+
 },
 infoText: {
     fontSize: 15, 
@@ -99,5 +115,7 @@ infoText: {
     textAlign: 'center', 
     fontFamily: 'serif', 
     paddingBottom: 10,
+    fontFamily: 'serif'
+
 },
 });
