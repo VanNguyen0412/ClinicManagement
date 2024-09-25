@@ -27,7 +27,12 @@ export const endpoints = {
     'appointment-detail': (appointmentId) => `/appointment/${appointmentId}/`,
     'patient-record': (patientId) => `/patient/${patientId}/healthrecord/`,
     'list-noti': '/notification/list/',
-    'read-noti': (notificationId) => `/notification/${notificationId}/read/`
+    'read-noti': (notificationId) => `/notification/${notificationId}/read/`,
+    'notification-information': (notificationId) => `notification/${notificationId}/information/`,
+    'doctor-info': '/doctor/current/',
+    'nurse-info': '/nurse/current/',
+    'health_monitoring': (patientId) => `/patient/${patientId}/health_monitoring/`,
+    'download-pdf': (notificationId) => `/notification/${notificationId}/medicines_pdf/`
 }
 
 export const authApi = (token) => {

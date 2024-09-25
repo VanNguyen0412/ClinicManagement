@@ -11,19 +11,22 @@ import { Modal } from "react-native";
 import { MyUserContext } from "../../configs/Context";
 import APIs, { authApi, endpoints } from "../../configs/APIs";
 import moment from "moment";
+import ProfilePatient from "../Patient/ProfilePatient";
 
 const Home = ({route}) => {
     const nav = useNavigation()
     const { width } = Dimensions.get('window');
     const scrollX = useRef(new Animated.Value(0)).current;
     const scrollViewRef = useRef(null);
-    const [open,setOpen] =useState(false)
+    const [open,setOpen] = useState(false)
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedMedicine, setSelectedMedicine] = useState(null);
     const user = useContext(MyUserContext);
     const [patient, setPatient] = useState({});
     const [banners1, setBanners] = useState([])
     const [medicine, setMedicine] = useState([]);
+    const [show, setShow] = useState(false);
+
 
     const openPatient = () => {
         nav.navigate("CreatePatient")
@@ -101,6 +104,16 @@ const Home = ({route}) => {
         return () => clearInterval(interval); // Clear interval on component unmount
     }, []);
 
+    const handleProfile = () => {
+        setShow(true);
+    }
+
+    const handleBackProfile = () => {
+        setShow(false);
+    }
+    if (show){
+        return <ProfilePatient onBack={handleBackProfile} />;
+    }
 
     return (
         <ScrollView style={styles.container}>
@@ -158,7 +171,7 @@ const Home = ({route}) => {
                     <Text>hóa đơn</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.iconBox}>
+                <TouchableOpacity style={styles.iconBox} onPress={handleProfile}>
                     <FontAwesome name='file-archive-o' size={25} color="#835741" />
                     <Text>Hồ sơ</Text>
                     <Text>bệnh nhân</Text>

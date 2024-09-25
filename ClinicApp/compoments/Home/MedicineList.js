@@ -82,9 +82,15 @@ const MedicineList = () => {
     return (
         <View style={{marginBottom: 30}}>
             <View style={MyStyles.headerList}>
+                {user.role === 'patient'? 
                 <TouchableOpacity onPress={() => nav.navigate("Home")}>
                 <FontAwesome name="arrow-left" size={24} color="#835741" />
                 </TouchableOpacity>
+                :
+                <TouchableOpacity onPress={() => nav.navigate("HomeDoctor")}>
+                <FontAwesome name="arrow-left" size={24} color="#835741" />
+                </TouchableOpacity>
+                }
                 <View>
                 <Text style={MyStyles.titleList}>Thực Phẩm Chức Năng</Text>
                 </View>

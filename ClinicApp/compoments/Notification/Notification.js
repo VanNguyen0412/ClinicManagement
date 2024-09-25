@@ -11,6 +11,7 @@ import { ActivityIndicator } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import NotificationDetail from './NotificationDetail';
 import { ScrollView } from 'react-native';
+import style from './style';
 
 const Notification = () => {
     const [notifications, setNotications] = useState([]);
@@ -98,15 +99,15 @@ const Notification = () => {
             >
             {notifications.map((item) => (
                 <TouchableOpacity onPress={() => handleDetail(item)}>
-                    <View key={item.id} style={[styles.notificationContainer, item.is_read ? styles.read : styles.unread]}>
-                        <View style={styles.header}>
-                            <Text style={styles.typeText}>
+                    <View key={item.id} style={[style.notificationContainer, item.is_read ? style.read : style.unread]}>
+                        <View style={style.header}>
+                            <Text style={style.typeText}>
                                 {item.type === 'medicine' ?
                                     '💊' : '📝'} {getType(item.type)}
                             </Text>
-                            <Text style={styles.dateText}>{new Date(item.created_date).toLocaleDateString()}</Text>
+                            <Text style={style.dateText}>{new Date(item.created_date).toLocaleDateString()}</Text>
                         </View>
-                        <Text style={styles.contentText}>{item.content}</Text>
+                        <Text style={style.contentText}>{item.content}</Text>
                     </View>
                 </TouchableOpacity>
 
@@ -132,43 +133,5 @@ const Notification = () => {
 
     );
 };
-
-const styles = StyleSheet.create({
-    notificationContainer: {
-        padding: 10,
-        marginVertical: 5,
-        marginHorizontal: 10,
-        borderRadius: 5,
-        borderWidth: 1,
-    },
-    read: {
-        backgroundColor: '#f0f0f0',
-        borderColor: '#cccccc',
-    },
-    unread: {
-        backgroundColor: '#fff',
-        borderColor: '#835741',
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 5,
-    },
-    typeText: {
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
-    dateText: {
-        fontSize: 12,
-        color: '#999',
-    },
-    contentText: {
-        fontSize: 14,
-    },
-    texContent: {
-        marginRight: 50,
-
-    }
-});
 
 export default Notification;

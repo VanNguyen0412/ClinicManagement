@@ -25,28 +25,31 @@ import Profile from "./compoments/user/Profile";
 import HealthRecord from "./compoments/Doctor/HealthRecord";
 import Notification from "./compoments/Notification/Notification";
 import Forum from "./compoments/Forum/Forum";
+import NotificationDetail from "./compoments/Notification/NotificationDetail";
+import ProfilePatient from "./compoments/Patient/ProfilePatient";
 
 
 const Stack = createStackNavigator();
 
 
 const MyStackMainPatient = () => {
-    const user = useContext(MyUserContext);
+  const user = useContext(MyUserContext);
 
-    return (
-      <Stack.Navigator
-            initialRouteName="HomeDoctor"
-            screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Home" component={Home} />
-            <Stack.Screen name="Doctor" component={Doctor} />
-            <Stack.Screen name="CreatePatient" component={CreatePatient} />
-            <Stack.Screen name="RegisterAppointment" component={RegisterAppointment} />
-            <Stack.Screen name="ListDoctor" component={ListDoctor} />
-            <Stack.Screen name="RatingDetail" component={RatingDetail} />
-            <Stack.Screen name="MedicineList" component={MedicineList} />
+  return (
+    <Stack.Navigator
+      initialRouteName="HomeDoctor"
+      screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Home" component={Home} />
+      <Stack.Screen name="Doctor" component={Doctor} />
+      <Stack.Screen name="CreatePatient" component={CreatePatient} />
+      <Stack.Screen name="RegisterAppointment" component={RegisterAppointment} />
+      <Stack.Screen name="ListDoctor" component={ListDoctor} />
+      <Stack.Screen name="RatingDetail" component={RatingDetail} />
+      <Stack.Screen name="MedicineList" component={MedicineList} />
+      <Stack.Screen name="ProfilePatient" component={ProfilePatient} />
 
-        </Stack.Navigator>
-    );
+    </Stack.Navigator>
+  );
 }
 
 const MyStackMainDoctor = () => {
@@ -54,18 +57,18 @@ const MyStackMainDoctor = () => {
 
   return (
     <Stack.Navigator
-          initialRouteName="HomeDoctor"
-          screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="HomeDoctor" component={HomeDoctor} />
-          <Stack.Screen name="Appointment" component={Appointment} />
-          <Stack.Screen name="CreateResult" component={CreateResult} />
-          <Stack.Screen name="HealthRecords" component={HealthRecord} />
-          <Stack.Screen name="Doctor" component={Doctor} />
-          <Stack.Screen name="CreatePresciption" component={CreatePresciption} />
-          <Stack.Screen name="ListDoctor" component={ListDoctor} />
-          <Stack.Screen name="RatingDetail" component={RatingDetail} />
-          <Stack.Screen name="MedicineList" component={MedicineList} />
-      </Stack.Navigator>
+      initialRouteName="HomeDoctor"
+      screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="HomeDoctor" component={HomeDoctor} />
+      <Stack.Screen name="Appointment" component={Appointment} />
+      <Stack.Screen name="CreateResult" component={CreateResult} />
+      <Stack.Screen name="HealthRecords" component={HealthRecord} />
+      <Stack.Screen name="Doctor" component={Doctor} />
+      <Stack.Screen name="CreatePresciption" component={CreatePresciption} />
+      <Stack.Screen name="ListDoctor" component={ListDoctor} />
+      <Stack.Screen name="RatingDetail" component={RatingDetail} />
+      <Stack.Screen name="MedicineList" component={MedicineList} />
+    </Stack.Navigator>
   );
 }
 
@@ -80,6 +83,15 @@ const MyStackLogin = () => {
   );
 };
 
+
+const MyStackNotification = () => {
+  return (
+    <Stack.Navigator initialRouteName="HomeScreen" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Notification" component={Notification} />
+      <Stack.Screen name="NotificationDetail" component={NotificationDetail} />
+    </Stack.Navigator>
+  )
+};
 
 const Tab = createBottomTabNavigator();
 const MyTab = () => {
@@ -114,49 +126,53 @@ const MyTab = () => {
 
           return <FontAwesome name={iconName} size={iconSize} color={iconColor} />;
         },
-        
+
         headerShown: false,
       })}
     >
-      {user.role ==='patient' ?
-      <Tab.Screen
-      name="Home"
-      component={MyStackMainPatient}
-      options={{
-        title: 'Trang Chủ',
-        tabBarLabel: ({ focused }) => (
-          <Text style={{ fontSize: focused ? 14 : 12, color: focused ? '#835741' : '#e6c4a8', fontFamily: 'serif' }}>
-            Trang Chủ
-          </Text>
-        ),
-      }}
-    /> : 
-    <Tab.Screen
-      name="Home"
-      component={MyStackMainDoctor}
-      options={{
-        title: 'Trang Chủ',
-        tabBarLabel: ({ focused }) => (
-          <Text style={{ fontSize: focused ? 14 : 12, color: focused ? '#835741' : '#e6c4a8', fontFamily: 'serif' }}>
-            Trang Chủ
-          </Text>
-        ),
-      }}
-    />
-    }
-      
-      <Tab.Screen
-        name="Appoint"
-        component={Appointment}
-        options={{
-          title: 'Lịch Hẹn',
-          tabBarLabel: ({ focused }) => (
-            <Text style={{ fontSize: focused ? 14 : 12, color: focused ? '#835741' : '#e6c4a8', fontFamily: 'serif' }}>
-              Lịch Hẹn
-            </Text>
-          ),
-        }}
-      />
+      {user.role === 'patient' ?
+        <>
+
+          <Tab.Screen
+            name="Home"
+            component={MyStackMainPatient}
+            options={{
+              title: 'Trang Chủ',
+              tabBarLabel: ({ focused }) => (
+                <Text style={{ fontSize: focused ? 14 : 12, color: focused ? '#835741' : '#e6c4a8', fontFamily: 'serif' }}>
+                  Trang Chủ
+                </Text>
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="Appoint"
+            component={Appointment}
+            options={{
+              title: 'Lịch Hẹn',
+              tabBarLabel: ({ focused }) => (
+                <Text style={{ fontSize: focused ? 14 : 12, color: focused ? '#835741' : '#e6c4a8', fontFamily: 'serif' }}>
+                  Lịch Hẹn
+                </Text>
+              ),
+            }}
+          />
+        </> :
+        <Tab.Screen
+          name="Home"
+          component={MyStackMainDoctor}
+          options={{
+            title: 'Trang Chủ',
+            tabBarLabel: ({ focused }) => (
+              <Text style={{ fontSize: focused ? 14 : 12, color: focused ? '#835741' : '#e6c4a8', fontFamily: 'serif' }}>
+                Trang Chủ
+              </Text>
+            ),
+          }}
+        />
+      }
+
+
       <Tab.Screen
         name="Main"
         component={Forum}
@@ -171,7 +187,7 @@ const MyTab = () => {
       />
       <Tab.Screen
         name="Noti"
-        component={Notification}
+        component={MyStackNotification}
         options={{
           title: 'Thông Báo',
           tabBarLabel: ({ focused }) => (
@@ -187,7 +203,7 @@ const MyTab = () => {
         options={{
           title: 'Khác',
           tabBarLabel: ({ focused }) => (
-            <Text style={{ fontSize: focused ? 14 : 12, color: focused ? '#835741' : '#e6c4a8',fontFamily: 'serif' }}>
+            <Text style={{ fontSize: focused ? 14 : 12, color: focused ? '#835741' : '#e6c4a8', fontFamily: 'serif' }}>
               Khác
             </Text>
           ),
@@ -203,15 +219,15 @@ const App = () => {
   return (
     <NavigationContainer>
       <MyUserContext.Provider value={user}>
-      <MyDispatchContext.Provider value={dispatch}>
-        {user===null ? 
-          <MyStackLogin />:
-          <MyTab />
-        }
-      </MyDispatchContext.Provider>
+        <MyDispatchContext.Provider value={dispatch}>
+          {user === null ?
+            <MyStackLogin /> :
+            <MyTab />
+          }
+        </MyDispatchContext.Provider>
       </MyUserContext.Provider>
 
-      
+
     </NavigationContainer>
   );
 }

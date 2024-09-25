@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -10,12 +10,15 @@ import APIs, { endpoints } from '../../configs/APIs';
 import { Modal } from 'react-native';
 import { ActivityIndicator, Avatar } from 'react-native-paper';
 import moment from 'moment';
+import { MyUserContext } from '../../configs/Context';
 
 const Doctor = ({ doctor, onBack }) => {
     const [showMore, setShowMore] = useState(false);
     const nav = useNavigation();
     const [loading, setLoading] = useState(false);
     const [ratings, setRating] = useState({});
+    const user = useContext(MyUserContext)
+
 
     const toggleShowMore = () => {
         setShowMore(!showMore);
