@@ -1,8 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import MyStyles from '../../styles/MyStyles';
 import { FontAwesome } from '@expo/vector-icons';
-import APIs, { endpoints } from '../../configs/APIs';
+import APIs, { authApi, endpoints } from '../../configs/APIs';
 import { MyUserContext } from '../../configs/Context';
 import { Modal } from 'react-native';
 import { Image } from 'react-native';
@@ -10,6 +10,7 @@ import { ActivityIndicator, SegmentedButtons } from 'react-native-paper';
 import moment from 'moment';
 import styles from './styles';
 import { TextInput } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfilePatient = ({ onBack }) => {
     const [patient, setPatient] = useState({});
@@ -33,7 +34,7 @@ const ProfilePatient = ({ onBack }) => {
             }
             // console.info(patient)
         } catch (ex) {
-            Alert.alert("Trang chủ", "Bị lỗi loading.")
+            Alert.alert("VítalCare Clinic", "Bị lỗi loading.")
         } finally {
             setLoading(false)
         }
@@ -52,18 +53,107 @@ const ProfilePatient = ({ onBack }) => {
                 const res = await APIs.get(endpoints['health_monitoring'](patient.id));
                 setHealthMonitoring(res.data);
             }
-            console.info(health_monitoring)
+            // console.info(health_monitoring)
         } catch (ex) {
-            Alert.alert("Trang chủ", "Bị lỗi loading.")
+            Alert.alert("VítalCare Clinic", "Bị lỗi loading.")
         } finally {
             setLoading(false)
         }
     }
+
     useEffect(() => {
         if (patient && patient.id) {
             getHealth();
         }
     }, [patient.id])
+
+    const handleUpdateDoctor = async () => {
+        setLoading(true);
+        try {
+            const token = await AsyncStorage.getItem("token");
+            if (!token) {
+                Alert.alert("Error", "No access token found.");
+                return;
+            }
+            let res = await authApi(token).post(endpoints['update-doctor-HM'](patient.id))
+
+            if (res.status === 200) {
+                Alert.alert("VítalCare Clinic", "Đã cập nhập thành công.");
+                getHealth()
+            } else if (res.status === 400) {
+                Alert.alert("VítalCare Clinic", "Bệnh nhân chưa có tạo theo dõi sức khỏe.");
+                getHealth()
+            }
+        } catch (error) {
+
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleUpdate = async () => {
+        setLoading(true);
+        if (!height || !weight || !heart_rate || !systolic || !diastolic) {
+            Alert.alert("VítalCare Clinic", "Thiếu thông tin, vui lòng điền lại.")
+        }
+        try {
+            const token = await AsyncStorage.getItem("token");
+            if (!token) {
+                Alert.alert("Error", "No access token found.");
+                return;
+            }
+            const formData = new FormData()
+            if (health_monitoring.length > 0) {
+                formData.append('height', height)
+                formData.append('weight', weight)
+                formData.append('heart_rate', heart_rate)
+                formData.append('blood_pressure_systolic', systolic)
+                formData.append('blood_pressure_diastolic', diastolic)
+                let res = await authApi(token).patch(endpoints['update-HM'](patient.id), formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                })
+                if (res.status === 200) {
+                    Alert.alert("VítalCare Clinic", "Đã cập nhật tình trạng sức khỏe thành công.");
+                    getHealth()
+                    setDiastolic('')
+                    setHeartRate('')
+                    setHeight('')
+                    setSystolic('')
+                    setWeight('')
+                }
+            } else if (health_monitoring.length === 0) {
+                formData.append('height', height)
+                formData.append('weight', weight)
+                formData.append('heart_rate', heart_rate)
+                formData.append('blood_pressure_systolic', systolic)
+                formData.append('blood_pressure_diastolic', diastolic)
+
+                let res = await authApi(token).post(endpoints['create_health_monitoring'](patient.id), formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                })
+                if (res.status === 201) {
+                    Alert.alert("VítalCare Clinic", "Đã tạo tình trạng sức khỏe thành công.");
+                    getHealth()
+                    setDiastolic('')
+                    setHeartRate('')
+                    setHeight('')
+                    setSystolic('')
+                    setWeight('')
+                } else if (res.status === 400) {
+                    Alert.alert("VítalCare Clinic", "Bệnh nhân này đã có bản ghi theo dõi sức khỏe, không thể tạo thêm.");
+                }
+            }
+
+        } catch (error) {
+
+        } finally {
+            setLoading(false)
+        }
+    }
 
     return (
         <>
@@ -153,12 +243,22 @@ const ProfilePatient = ({ onBack }) => {
                         <Text style={styles.infoHeader1}>Danh sách bác sĩ từng khám bệnh</Text>
 
                         {health_monitoring.map((item) => (
-                            <View>
-                                <Text>{item.doctor}
-                                </Text>
-                            </View>
+                            item.doctor.map((doctor) => (
+                                <View style={{ flexDirection: 'row', borderWidth: 0.5, borderColor: '#835741', padding: 3, borderRadius: 7, marginBottom: 10 }}>
+                                    <Text style={{ fontFamily: 'serif', marginRight: 13, marginTop: 43, fontWeight: '700' }}>BS: {doctor.id}</Text>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={{ marginBottom: 5, fontFamily: 'serif', fontSize: 17, fontWeight: '700' }}>
+                                            Tên bác sĩ: {doctor.first_name} {doctor.last_name}</Text>
+                                        <Text style={{ marginBottom: 5, fontFamily: 'serif' }}>Chuyên khoa: {doctor.expertise}</Text>
+                                        <Text style={{ marginBottom: 5, fontFamily: 'serif' }}>Có {doctor.experience_years} năm kinh nghiệm</Text>
+                                        <Text style={{ marginBottom: 5, fontFamily: 'serif' }}>Bằng cấp: {doctor.qualifications}</Text>
+                                        <Text style={{ marginBottom: 5, fontFamily: 'serif' }}>Email: {doctor.user.email}</Text>
+                                    </View>
+                                </View>
+                            ))
+
                         ))}
-                        <TouchableOpacity style={styles.button}>
+                        <TouchableOpacity style={styles.button} onPress={handleUpdateDoctor}>
                             <Text style={styles.buttonText1}>Cập nhập</Text>
                         </TouchableOpacity>
                     </View>
@@ -220,7 +320,7 @@ const ProfilePatient = ({ onBack }) => {
                             />
                         </View>
 
-                        <TouchableOpacity style={styles.button}>
+                        <TouchableOpacity style={styles.button} onPress={handleUpdate}>
                             <Text style={styles.buttonText1}>Cập nhập</Text>
                         </TouchableOpacity>
                         <Text style={styles.bonus}>

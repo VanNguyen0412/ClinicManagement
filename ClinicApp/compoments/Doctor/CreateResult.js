@@ -12,6 +12,7 @@ import { ActivityIndicator } from 'react-native-paper';
 import APIs, { authApi, endpoints } from '../../configs/APIs.js';
 import moment from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Prescription from '../Prescription/Presciptions.js';
 
 const CreateResult = ({ route }) => {
     const { appointmentId } = route.params;
@@ -32,7 +33,7 @@ const CreateResult = ({ route }) => {
             console.info(detail)
         } catch (ex) {
             console.error(ex)
-            Alert.alert("Tạo Lịch Khám", "Loading thông tin lịch hẹn lỗi");
+            Alert.alert("VítalCare Clinic", "Loading thông tin lịch hẹn lỗi");
         } finally {
             setLoading(false);
         }
@@ -52,8 +53,51 @@ const CreateResult = ({ route }) => {
         setShowRecords(false);
     };
 
-    const handleCreatePrescription = () => {
-        setCreatePrescription(true);
+    const handleCreatePrescription = async () => {
+        if (!symptoms || !diagnosis || !allergy){
+            Alert.alert("VítalCare Clinic", "Thiếu thông tin. Hãy điền đủ thông tin yêu cầu.")
+        }
+        setLoading(true)
+        try{
+            const token = await AsyncStorage.getItem("token");
+            if (!token) {
+                Alert.alert("Error", "No access token found.");
+                return;
+            }   
+            // console.info(token);
+            const fromData = new FormData();
+            fromData.append('symptom', symptoms );
+            fromData.append('diagnosis', diagnosis);
+            fromData.append('allergy_medicines', allergy);
+            // console.info(fromData)
+            const response = await authApi(token).post(endpoints['appointment-result'](appointmentId), fromData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            
+            if(response.status === 201){
+                Alert.alert("VítalCare Clinic", "Tạo kết quả thành công.");
+                setCreatePrescription(true);
+            }else if(response.status === 400){
+                Alert.alert("VítalCare Clinic", "Đã có kết quả cho cuộc hẹn này");
+                setAllergy('')
+                setSymptoms('')
+                setDiagnosis('')
+            }
+            
+        }catch (error) {
+            if (error.response){
+                console.error(error)
+                Alert.alert("VítalCare Clinic","Đã có kết quả cho cuộc hẹn này!");
+            }else {
+                console.error("Network error", error);
+                Alert.alert("VítalCare Clinic", "Có lỗi xảy ra, vui lòng thử lại sau")
+            }
+        } finally {
+            setLoading(false);
+        }
+        
     };
 
     const handleBackResult = () => {
@@ -62,19 +106,16 @@ const CreateResult = ({ route }) => {
 
     if (showRecords && detail) {
         const patientId = detail.patient.id;
-        return <HealthRecord patientId={patientId} onBack={handleBack} />;
+        const patient = {
+            name: detail.patient.full_name,
+            code: detail.patient.code
+        }
+        return <HealthRecord patientId={patientId} patient={patient} onBack={handleBack} />;
     }
 
     if (createPrescription) {
-        const patientInfo = {
-            name: patient,
-            examDate: '12/09/2024',
-            examTime: '15:00:00',
-            diagnosis: diagnosis,
-            symptoms: symptoms
-        };
-
-        return <CreatePresciption patientInfo={patientInfo} onBack={handleBackResult} />;
+        const appointment = appointmentId;
+        return <Prescription appointmentId={appointment} onBack={handleBackResult} />;
     }
 
     return (

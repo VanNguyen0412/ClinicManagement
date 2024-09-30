@@ -43,7 +43,8 @@ input: {
     borderRadius: 5,
     paddingHorizontal: 10,
     marginTop: 5,
-    fontFamily: 'serif'
+    fontFamily: 'serif',
+    textAlign: 'center',
 },
 iconGrid: {
     flexDirection: 'row',

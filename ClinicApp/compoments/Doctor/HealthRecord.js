@@ -12,7 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { ActivityIndicator } from 'react-native-paper';
 
 
-const HealthRecord = ({ patientId, onBack }) => {
+const HealthRecord = ({ patientId, onBack, patient }) => {
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -29,7 +29,7 @@ const HealthRecord = ({ patientId, onBack }) => {
             // console.info(records)
         } catch (ex) {
             console.error(ex)
-            Alert.alert("Thông báo", "Loading thông tin hồ sơ bệnh bị lỗi")
+            Alert.alert("VítalCare Clinic", "Loading thông tin hồ sơ bệnh bị lỗi")
         } finally {
             setLoading(false);
         }
@@ -54,16 +54,17 @@ const HealthRecord = ({ patientId, onBack }) => {
             </View>
             <View style={styles.containerRecord}>
                 <Text style={styles.subTitle}>I. Thông tin bệnh nhân</Text>
+
+                <View style={{ flexDirection: 'row' }}>
+                    <Text style={styles.label}>Họ và tên:</Text>
+                    <Text style={styles.infoText}>{patient.name}</Text>
+                </View>
+                <View style={{ flexDirection: 'row' }}>
+                    <Text style={styles.label}>Mã bệnh nhân:</Text>
+                    <Text style={styles.infoText}>MH{patient.code}</Text>
+                </View>
                 {records.map((record) => (
                     <>
-                        <View style={{ flexDirection: 'row' }}>
-                            <Text style={styles.label}>Họ và tên:</Text>
-                            <Text style={styles.infoText}>{record.patient.full_name}</Text>
-                        </View>
-                        <View style={{ flexDirection: 'row' }}>
-                            <Text style={styles.label}>Mã bệnh nhân:</Text>
-                            <Text style={styles.infoText}>MH{record.patient.code}</Text>
-                        </View>
                         <View style={{ flexDirection: 'row' }}>
                             <Text style={styles.label}>Email:</Text>
                             <Text style={styles.infoText}>{record.patient.email}</Text>
@@ -72,17 +73,21 @@ const HealthRecord = ({ patientId, onBack }) => {
                 ))}
                 <Text style={styles.subTitle}>II. Hồ sơ khám bệnh</Text>
                 <ScrollView>
-                    {records.map((record) => (
-                        <View style={styles.recordCard} key={record.id}>
-                            <Text style={styles.recordText}>
-                                Ngày khám: {moment(record.appointment_date).format('DD MMMM YYYY HH:mm:ss')}
-                            </Text>
-                            <Text style={styles.recordText}>Triệu chứng: {record.symptom}</Text>
-                            <Text style={styles.recordText}>Chẩn đoán: {record.diagnosis}</Text>
-                            <Text style={styles.recordText}>Bác sĩ: {record.doctor.full_name}</Text>
-                            <Text style={styles.recordText}>Thuốc dị ứng: {record.allergy_medicines}</Text>
-                        </View>
-                    ))}
+                    {records ? <Text style={{fontFamily: 'serif', fontSize: 16, textAlign:'center'}}>
+                        Bệnh nhân <Text style={{fontWeight: 'bold'}}>{patient.name}</Text> chưa có hồ sơ khám bệnh</Text> :
+                        records.map((record) => (
+                            <View style={styles.recordCard} key={record.id}>
+                                <Text style={styles.recordText}>
+                                    Ngày khám: {moment(record.appointment_date).format('DD MMMM YYYY HH:mm:ss')}
+                                </Text>
+                                <Text style={styles.recordText}>Triệu chứng: {record.symptom}</Text>
+                                <Text style={styles.recordText}>Chẩn đoán: {record.diagnosis}</Text>
+                                <Text style={styles.recordText}>Bác sĩ: {record.doctor.full_name}</Text>
+                                <Text style={styles.recordText}>Thuốc dị ứng: {record.allergy_medicines}</Text>
+                            </View>
+                        ))
+                    }
+
                 </ScrollView>
                 <TouchableOpacity style={styles.backButtonRecord} onPress={onBack}>
                     <Text style={styles.backButtonTextRecord}>Quay lại</Text>

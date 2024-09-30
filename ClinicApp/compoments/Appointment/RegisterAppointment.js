@@ -18,7 +18,7 @@ const RegisterAppointment = () => {
     const nav = useNavigation();
     const [show, setShow] = useState(false);
     const [date, setDate] = useState(new Date());
-    const [appdate, setAppDate] = useState();
+    const [appdate, setAppDate] = useState('');
     const [time, setTime] = useState('');
     const [showtime, setShowTime] = useState(false);
     const [dropdownValue, setDropdownValue] = useState(null);
@@ -90,6 +90,9 @@ const RegisterAppointment = () => {
         };
 
     const registerAppointment = async () => {
+        if (!appdate || !time || !dropdownValue){
+            Alert.alert("Thông báo", "Bạn nhập thiếu thông tin!");
+        }
         setLoading(true);
         try{
             const token = await AsyncStorage.getItem("token");
@@ -111,17 +114,15 @@ const RegisterAppointment = () => {
             
             if(response.status === 201){
                 Alert.alert("Lịch Hẹn", "Tạo lịch hẹn thành công. Hãy đợi xét duyệt thông qua email.");
-                nav.navigate("Home")
+                setAppDate("")
+                setTime("")
+                setDropdownValue(null)
             }
-            // }else if(response.status === 403){
-            //     Alert.alert("Đánh giá", "Bạn chỉ có thể đánh giá một bác sĩ nếu bạn đã hoàn tất cuộc hẹn và có đơn thuốc.");
-            //     setRating(0);
-            //     setReviewText('');
-            // }
+            
         }catch (error) {
             if (error.response){
                 console.error(error)
-                Alert.alert("Lịch Hẹn","Bị lỗi thông tin!");
+                Alert.alert("Lịch Hẹn","Bạn nhập thiếu thông tin!");
             }else {
                 console.error("Network error", error);
                 Alert.alert("Đánh giá", "Có lỗi xảy ra, vui lòng thử lại sau")
@@ -130,6 +131,7 @@ const RegisterAppointment = () => {
             setLoading(false);
         }
     }
+
 
     return (
         <>

@@ -11,6 +11,7 @@ export const endpoints = {
     'current-patient': '/patient/current/',
     'new': '/new/',
     'medicine': '/medicine/functional/',
+    'medicine-all': '/medicine/',
     'doctor': '/doctorRating/',
     'doctorDetail': (doctorId) => `/doctorRating/${doctorId}/`,
     'medicineDetail': (medicineId) => `/medicine/${medicineId}/`,
@@ -32,7 +33,19 @@ export const endpoints = {
     'doctor-info': '/doctor/current/',
     'nurse-info': '/nurse/current/',
     'health_monitoring': (patientId) => `/patient/${patientId}/health_monitoring/`,
-    'download-pdf': (notificationId) => `/notification/${notificationId}/medicines_pdf/`
+    'download-pdf': (notificationId) => `/notification/${notificationId}/medicines_pdf/`,
+    'appointment-result': (appointmentId) => `/appointment/${appointmentId}/result/`,
+    'prescription': (appointmentId) => `/prescription/no_medicine/?appointment=${appointmentId}`,
+    'prescription-detail': (prescriptionId) => `/prescription/${prescriptionId}`,
+    'add-medicines': (prescriptionId) => `prescription/${prescriptionId}/create_medicine/`,
+    'delete-medicine': (prescriptionId, medicineId) => `prescription/${prescriptionId}/medicine/?medicine=${medicineId}`,
+    'done-prescription':(prescriptionId) => `prescription/${prescriptionId}/medicines/`,
+    'result': 'prescription/result/',
+    'create_health_monitoring': (patientId) => `/patient/${patientId}/create_health_monitoring/`,
+    'update-doctor-HM': (patientId) => `/patient/${patientId}/update_doctor/`,
+    'update-HM': (patientId) => `/patient/${patientId}/update_health_monitoring/`,
+    'predict': '/predict/',
+    'forum': '/forum/'
 }
 
 export const authApi = (token) => {

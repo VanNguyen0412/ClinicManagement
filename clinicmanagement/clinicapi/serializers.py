@@ -139,7 +139,7 @@ class AppointmentInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Appointment
-        fields = ['appointment_date', 'appointment_time', 'status', 'patient']
+        fields = ['id', 'appointment_date', 'appointment_time', 'status', 'patient']
 
 
 class PrescriptionSerializer(serializers.ModelSerializer):
@@ -235,6 +235,15 @@ class HealthMonitoringSerializer(serializers.ModelSerializer):
         read_only_fields = ['doctor']
 
 
+class HealthMonitoringDetailSerializer(serializers.ModelSerializer):
+    doctor = DoctorSerializer(many=True)
+
+    class Meta:
+        model = HealthMonitoring
+        fields = ['id', 'patient', 'height', 'weight', 'heart_rate', 'blood_pressure_systolic', 'blood_pressure_diastolic',
+                  'measurement_time', 'doctor']
+
+
 class ForumAnswerSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
@@ -253,6 +262,23 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 
 class ForumQuestionSerializer(serializers.ModelSerializer):
+    patient = PatientNameSerializer()
+
+    def to_representation(self, instance):
+        req = super().to_representation(instance)
+        if instance.image:
+            req['image'] = instance.image.url
+        return req
+
+    class Meta:
+        model = ForumQuestion
+        fields = ['id', 'title', 'content', 'image', 'created_date', 'updated_date', 'patient']
+        extra_kwargs = {
+            'patient': {'required': False}  # Đảm bảo 'patient' không phải là trường bắt buộc
+        }
+
+
+class ForumQuestionCreateSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         req = super().to_representation(instance)

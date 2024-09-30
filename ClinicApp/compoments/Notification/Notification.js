@@ -21,8 +21,8 @@ const Notification = () => {
     const [refreshing, setRefreshing] = useState(false); // Trạng thái refresh
     const [show, setShow] = useState(false);
     const [noti, setNoti] = useState();
- 
-    
+
+
 
     const getType = (type) => {
         switch (type) {
@@ -97,21 +97,47 @@ const Notification = () => {
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                 }
             >
-            {notifications.map((item) => (
-                <TouchableOpacity onPress={() => handleDetail(item)}>
-                    <View key={item.id} style={[style.notificationContainer, item.is_read ? style.read : style.unread]}>
-                        <View style={style.header}>
-                            <Text style={style.typeText}>
-                                {item.type === 'medicine' ?
-                                    '💊' : '📝'} {getType(item.type)}
-                            </Text>
-                            <Text style={style.dateText}>{new Date(item.created_date).toLocaleDateString()}</Text>
-                        </View>
-                        <Text style={style.contentText}>{item.content}</Text>
-                    </View>
-                </TouchableOpacity>
-
-            ))}
+                {notifications.map((item) => (
+                    user.role === 'patient' ?
+                        <TouchableOpacity onPress={() => handleDetail(item)}>
+                            <View key={item.id} style={[style.notificationContainer, item.is_read ? style.read : style.unread]}>
+                                <View style={style.header}>
+                                    <Text style={style.typeText}>
+                                        {item.type === 'medicine' ?
+                                            '💊' : '📝'} {getType(item.type)}
+                                    </Text>
+                                    <Text style={style.dateText}>{new Date(item.created_date).toLocaleDateString()}</Text>
+                                </View>
+                                <Text style={style.contentText}>{item.content}</Text>
+                            </View>
+                        </TouchableOpacity>
+                        : user.role === 'doctor' ?
+                            <TouchableOpacity onPress={() => nav.navigate("Appointment")}>
+                                <View key={item.id} style={[style.notificationContainer, item.is_read ? style.read : style.unread]}>
+                                    <View style={style.header}>
+                                        <Text style={style.typeText}>
+                                            {item.type === 'medicine' ?
+                                                '💊' : '📝'} {getType(item.type)}
+                                        </Text>
+                                        <Text style={style.dateText}>{new Date(item.created_date).toLocaleDateString()}</Text>
+                                    </View>
+                                    <Text style={style.contentText}>{item.content}</Text>
+                                </View>
+                            </TouchableOpacity>
+                            :
+                            <TouchableOpacity onPress={() => nav.navigate("Appointment")}>
+                                <View key={item.id} style={[style.notificationContainer, item.is_read ? style.read : style.unread]}>
+                                    <View style={style.header}>
+                                        <Text style={style.typeText}>
+                                            {item.type === 'medicine' ?
+                                                '💊' : '📝'} {getType(item.type)}
+                                        </Text>
+                                        <Text style={style.dateText}>{new Date(item.created_date).toLocaleDateString()}</Text>
+                                    </View>
+                                    <Text style={style.contentText}>{item.content}</Text>
+                                </View>
+                            </TouchableOpacity>
+                ))}
             </ScrollView>
             {loading && (
                 <Modal

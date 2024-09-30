@@ -210,7 +210,7 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
     def get_health_monitoring(self, request, pk=None):
         patient = self.get_object()
         health_monitoring = HealthMonitoring.objects.filter(patient_id=patient)
-        serializer = HealthMonitoringSerializer(health_monitoring, many=True)
+        serializer = HealthMonitoringDetailSerializer(health_monitoring, many=True)
         return Response(serializer.data)
 
     @action(methods=['post'], url_path='create_health_monitoring', detail=True)
@@ -507,6 +507,15 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retrie
             type=Notification.Type.APPOINTMENT,
             user=appointment.patient.user  # Assuming `patient` is a ForeignKey to `Patient`
         )
+        notification_content1 = \
+            (f"Bạn có lịch hẹn mới ngày {appointment.appointment_date} cho bệnh nhân "
+             f"{appointment.patient.first_name} {appointment.patient.last_name}.")
+
+        Notification.objects.create(
+            content=notification_content1,
+            type=Notification.Type.GENERAL,
+            user=appointment.doctor.user
+        )
         serializer = AppointmentSerializer(appointment)
         info = []
         info.append(appointment.appointment_date)  # 0
@@ -587,6 +596,9 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retrie
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        appointment.status = Appointment.Status.DONE
+        appointment.save()
+
         HealthRecord.objects.create(
             patient_id=appointment.patient.id,
             appointment_date=appointment.appointment_date,
@@ -611,11 +623,32 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
     permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
-        if self.action in ['create_prescription', 'list_medicines']:
+        if self.action in ['create_prescription', 'list_medicines', 'no_prescription', 'delete_prescription']:
             return [DoctorPermission()]
         elif self.action in ['create_invoice']:
             return [PaymentNursePermission()]
+        elif self.action in ['get_result_prescription']:
+            return [PatientOwner()]
         return [permissions.AllowAny()]
+
+    @action(methods=['get'], url_path='no_medicine', detail=False)
+    def no_prescription(self, request, pk=None):
+        appointment_id = request.query_params.get('appointment')
+
+        if not appointment_id:
+            return Response({"error": "Appointment ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Filter prescriptions by the given appointment ID and check for null PrescriptionMedicine
+            prescriptions_without_medicine = Prescription.objects.filter(
+                prescriptionmedicine__isnull=True,
+                appointment_id=appointment_id
+            )
+        except Prescription.DoesNotExist:
+            return Response({"error": "No prescriptions found for this appointment."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = PrescriptionSerializer(prescriptions_without_medicine, many=True)
+        return Response(serializer.data)
 
     @action(methods=['post'], url_path='invoice', detail=True)
     def create_invoice(self, request, pk=None):
@@ -648,6 +681,15 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(methods=['delete'], url_path='medicine', detail=True)
+    def delete_prescription(self, request, pk=None):
+        result = self.get_object()
+        medicine_id = request.query_params.get('medicine')
+        prescription = PrescriptionMedicine.objects.filter(prescription=result, medicine_id=medicine_id)
+        prescription.delete()
+
+        return Response({'detail': 'Xóa thành công'}, status=status.HTTP_200_OK)
+
     @action(detail=True, methods=['get'], url_path='medicines')
     def list_medicines(self, request, pk=None):
         doctor = Doctor.objects.get(user_id=request.user.id)
@@ -675,8 +717,16 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
             return Response({"error": "Bác sĩ hoàn tất phiếu khám phải là bác sĩ khám."})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(methods=['get'], url_path='result', detail=False)
+    def get_result_prescription(self, request, pk=None):
+        patients = Patient.objects.get(user=request.user)
+        # appointment = Appointment.objects.filter(patient=patient)
+        presciptions = Prescription.objects.filter(appointment__patient=patients)
+        serializer = PrescriptionSerializer(presciptions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
+
+class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -721,7 +771,7 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
 
         if notification.type == Notification.Type.APPOINTMENT:
             patient = Patient.objects.get(user=notification.user)
-            appointment = Appointment.objects.filter(patient=patient).last()  # Lấy cuộc hẹn gần nhất
+            appointment = Appointment.objects.filter(patient=patient).first()  # Lấy cuộc hẹn gần nhất
             if appointment:
                 appointment_serializer = AppointmentSerializer(appointment)
                 return Response(appointment_serializer.data, status=status.HTTP_200_OK)
@@ -731,7 +781,7 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         elif notification.type == Notification.Type.GENERAL:
             # Lấy phiếu khám của cuộc hẹn gần nhất
             patient = Patient.objects.get(user=notification.user)
-            appointment = Appointment.objects.filter(patient=patient).last()
+            appointment = Appointment.objects.filter(patient=patient).first()
             if appointment:
                 try:
                     prescription = Prescription.objects.get(appointment=appointment)
@@ -746,7 +796,7 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         elif notification.type == Notification.Type.MEDICINE:
             # Tìm thuốc dựa trên bệnh nhân và cuộc hẹn gần nhất
             patient = Patient.objects.get(user=notification.user)
-            appointment = Appointment.objects.filter(patient=patient).last()
+            appointment = Appointment.objects.filter(patient=patient).first()
             if appointment:
                 try:
                     # Giả định có model Medicine liên kết với Appointment
@@ -768,7 +818,7 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         if notification.type == Notification.Type.MEDICINE:
             # Tìm thuốc dựa trên bệnh nhân và cuộc hẹn gần nhất
             patient = Patient.objects.get(user=notification.user)
-            appointment = Appointment.objects.filter(patient=patient).last()
+            appointment = Appointment.objects.filter(patient=patient).first()
             if appointment:
                 try:
                     # Giả định có model Medicine liên kết với Appointment
@@ -896,7 +946,8 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
 class MedicineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Medicine.objects.all()
     serializer_class = MedicineSerializer
-    pagination_class = ItemPaginator
+
+    # pagination_class = ItemPaginator
 
     @action(methods=['get'], url_path='functional', detail=False)
     def get_functional_food(self, request):
@@ -974,7 +1025,7 @@ class ForumQuestionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retr
         patient = Patient.objects.get(user=user)
         data = request.data.copy()
         data['patient'] = patient.id
-        serializer = self.get_serializer(data=data)
+        serializer = ForumQuestionCreateSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"detail": "Đã tạo diễn đàn thành công", "data": serializer.data},

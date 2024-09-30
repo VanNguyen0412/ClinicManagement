@@ -34,6 +34,8 @@ const NotificationDetail = ({ onBack, notificationId }) => {
                 return 'Đang chờ';
             case 'cancel':
                 return 'Đã bị hủy';
+            case 'done':
+                return 'Đã hoàn thành.';
             default:
                 return status;
         }
@@ -49,7 +51,6 @@ const NotificationDetail = ({ onBack, notificationId }) => {
             }
             let res = await authApi(token).post(endpoints['read-noti'](notificationId));
             setDetail(res.data)
-            console.info(detail)
         } catch (ex) {
             console.error(ex)
             Alert.alert("Thông báo", "Hiện thông tin lỗi");
@@ -68,7 +69,6 @@ const NotificationDetail = ({ onBack, notificationId }) => {
             }
             let res = await authApi(token).get(endpoints['notification-information'](notificationId));
             setInfo(res.data)
-
         } catch (ex) {
             console.error(ex)
             Alert.alert("Thông báo", "Hiện thông tin chi tiết bị lỗi");
@@ -91,7 +91,6 @@ const NotificationDetail = ({ onBack, notificationId }) => {
             if (response.status === 200) {
                 const pdfUrl = response.request.responseURL;
                 Linking.openURL(pdfUrl);
-                console.info(pdfUrl)
             } else {
                 Toast.show({
                     type: 'error',

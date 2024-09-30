@@ -28,6 +28,8 @@ const Appointment = () => {
         return 'Đã xác nhận.';
       case 'cancel':
         return 'Bị hủy.';
+      case 'done':
+        return 'Đã hoàn thành.';
       default:
         return status;
     }
@@ -65,6 +67,65 @@ const Appointment = () => {
     loadAppointment();
   }, [user.role])
 
+  const handleConfirm = async (appointmentId) => {
+    setLoading(true)
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) {
+        Alert.alert("Error", "No access token found.");
+        return;
+      }
+      let res = await authApi(token).post(endpoints['comfirm-appointment'](appointmentId))
+
+      if (res.status === 200) {
+        Alert.alert("VítalCare Clinic", "Đã xác nhận lịch hẹn thành công.");
+        loadAppointment();
+      } else if (res.status === 400) {
+        Alert.alert("VítalCare Clinic", "Bác sĩ đã có hơn 10 cuộc hẹn được xác nhận vào ngày này.")
+      }
+
+    } catch (error) {
+      if (error.response) {
+        console.error(error)
+        Alert.alert("VítalCare Clinic", "Bị lỗi thông tin!");
+      } else {
+        console.error("Network error", error);
+        Alert.alert("VítalCare Clinic", "Có lỗi xảy ra, vui lòng thử lại sau")
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleCancel = async (appointmentId) => {
+    setLoading(true)
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) {
+        Alert.alert("Error", "No access token found.");
+        return;
+      }
+      let res = await authApi(token).delete(endpoints['cancel-appointment'](appointmentId))
+
+      if (res.status === 204) {
+        Alert.alert("VítalCare Clinic", "Đã hủy lịch hẹn thành công.");
+        loadAppointment();
+      }
+
+    } catch (error) {
+      if (error.response) {
+        console.error(error)
+        Alert.alert("VítalCare Clinic", "Bị lỗi thông tin!");
+      } else {
+        console.error("Network error", error);
+        Alert.alert("VítalCare Clinic", "Có lỗi xảy ra, vui lòng thử lại sau")
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
   const totalPages = Math.ceil(appointment.length / itemsPerPage);
   const startIndex = currentPage * itemsPerPage;
   const currentAppointments = appointment.slice(startIndex, startIndex + itemsPerPage);
@@ -87,9 +148,9 @@ const Appointment = () => {
 
       {user.role === 'patient' ?
         <View style={MyStyles.headerList}>
-          
+
           <View>
-            <Text style={MyStyles.titleList}>Lịch Hẹn Trong Ngày</Text>
+            <Text style={MyStyles.titleList}>Lịch Hẹn Khám Bệnh</Text>
           </View>
           <TouchableOpacity>
             <FontAwesome name="phone" size={24} color="#835741" />
@@ -123,16 +184,26 @@ const Appointment = () => {
                   <Text style={{ marginBottom: 5, fontFamily: 'serif' }}>Trạng thái: {getStatus(appointment.status)}</Text>
                 </View>
               </View>
+              {user.role === 'nurse' ? <>
+                <TouchableOpacity style={styles.search1}
+                  onPress={() => handleConfirm(appointment.id)}>
+                  <Text style={styles.text1}>Xác nhận lịch hẹn</Text>
+                </TouchableOpacity>
+              </> : user.role === 'doctor' ? <>
+                <TouchableOpacity style={styles.search1}
+                  onPress={() => { nav.navigate("CreateResult", { 'appointmentId': appointment.id, 'patient': appointment.patient.id }) }
+                  }>
+                  <Text style={styles.text1}>Hoàn thành phiếu khám</Text>
+                </TouchableOpacity>
+              </> : <>
+                {appointment.status === 'cancel' ?
+                  <TouchableOpacity style={styles.search1}
+                    onPress={() => handleCancel(appointment.id)}>
+                    <Text style={styles.text1}>Hủy lịch hẹn</Text>
+                  </TouchableOpacity> : null}
 
+              </>}
 
-              <TouchableOpacity style={styles.search1}
-                onPress={() => { nav.navigate("CreateResult", { 'appointmentId': appointment.id, 'patient': appointment.patient.id }) }}
-              >
-                <Text style={styles.text1}>
-                  {user.role === 'nurse' ? 'Xác nhận lịch hẹn' :
-                    user.role === 'doctor' ? 'Hoàn thành phiếu khám' : 'Hủy phiếu khám'}
-                </Text>
-              </TouchableOpacity>
             </View>
           ))}
         </ScrollView>

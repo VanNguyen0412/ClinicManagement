@@ -27,6 +27,8 @@ import Notification from "./compoments/Notification/Notification";
 import Forum from "./compoments/Forum/Forum";
 import NotificationDetail from "./compoments/Notification/NotificationDetail";
 import ProfilePatient from "./compoments/Patient/ProfilePatient";
+import Prescription from "./compoments/Prescription/Presciptions";
+import HealthMonitoring from "./compoments/HealthMonitoring/HealthMonitoring";
 
 
 const Stack = createStackNavigator();
@@ -47,6 +49,7 @@ const MyStackMainPatient = () => {
       <Stack.Screen name="RatingDetail" component={RatingDetail} />
       <Stack.Screen name="MedicineList" component={MedicineList} />
       <Stack.Screen name="ProfilePatient" component={ProfilePatient} />
+      <Stack.Screen name="HealthMonitoring" component={HealthMonitoring} />
 
     </Stack.Navigator>
   );
@@ -68,6 +71,8 @@ const MyStackMainDoctor = () => {
       <Stack.Screen name="ListDoctor" component={ListDoctor} />
       <Stack.Screen name="RatingDetail" component={RatingDetail} />
       <Stack.Screen name="MedicineList" component={MedicineList} />
+      <Stack.Screen name="Prescription" component={Prescription} />
+
     </Stack.Navigator>
   );
 }

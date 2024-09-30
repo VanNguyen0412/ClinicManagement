@@ -97,6 +97,7 @@ class Appointment(BaseModel):
         PENDING = 'pending'
         CONFIRM = 'confirm'
         CANCELING = 'canceling'
+        DONE = 'done'
 
     status = models.CharField(max_length=255, choices=Status.choices, default=Status.PENDING)
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
