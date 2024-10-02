@@ -155,4 +155,11 @@ export default StyleSheet.create({
         bottom: 0,
         backgroundColor: 'rgba(0, 0, 0, 0.5)', // Màu mờ
     },
+    invoice: {
+        borderColor: '#835741', 
+        borderWidth: 1, 
+        padding: 7, 
+        borderRadius: 10, 
+        marginTop: 8
+    }
 })

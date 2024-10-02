@@ -7,10 +7,45 @@ from oauth2_provider.models import Application, AccessToken, Grant, IDToken, Ref
 import cloudinary
 from django.urls import reverse
 from django.utils.html import format_html
+from django.template.response import TemplateResponse
+from django.urls import path
+from django.db.models import Count
+from django.db.models import Q
+from django.shortcuts import render
+from datetime import datetime
+from django.db.models import Sum
 
 
 class ClinicAppAdminSite(admin.AdminSite):
     site_header = "HỆ THỐNG QUẢN LÝ PHÒNG KHÁM TƯ"
+
+    def get_urls(self):
+        return [path('revenue/', self.stats_view)] + super().get_urls()
+
+    def stats_view(self, request):
+
+        year = request.GET.get('year')
+        month = request.GET.get('month')
+        payments = []
+        total_revenue = 0
+        if year:
+            payments = Payment.objects.all()
+            payments = payments.filter(payment_date__year=year)
+            payments = payments.order_by('id').values('id', 'amount', 'payment_date', 'invoice_id')
+            total_revenue = payments.aggregate(total=Sum('amount'))['total'] or 0
+
+        if month:
+            payments = Payment.objects.all()
+            payments = payments.filter(payment_date__month=month)
+            payments = payments.order_by('id').values('id', 'amount', 'payment_date', 'invoice_id')
+            total_revenue = payments.aggregate(total=Sum('amount'))['total'] or 0
+
+        return render(request, 'admin/stats.html', {
+            'stats': payments,
+            'total_revenue': total_revenue,
+            'selected_year': year,
+            'selected_month': month,
+        })
 
 
 admin_site = ClinicAppAdminSite('myclinic')
@@ -170,4 +205,5 @@ admin_site.register(ForumQuestion, ForumQuestionAdmin)
 admin_site.register(ForumAnswers)
 admin_site.register(Notification)
 admin_site.register(Payment)
+admin_site.register(Invoice)
 admin_site.register(Report)

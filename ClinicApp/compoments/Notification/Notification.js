@@ -32,6 +32,8 @@ const Notification = () => {
                 return 'Thông báo chung';
             case 'appointment':
                 return 'Thông báo lịch khám';
+            case 'invoice':
+                return 'Thông báo yêu cầu hóa đơn';
             default:
                 return type;
         }
@@ -50,7 +52,7 @@ const Notification = () => {
             // console.info(notifications)
         } catch (ex) {
             console.error(ex)
-            Alert.alert("Thông báo", "Hiện thông tin lỗi");
+            Alert.alert("VítalCare Clinic", "Hiện thông tin lỗi");
         } finally {
             setLoading(false)
         }
@@ -125,7 +127,7 @@ const Notification = () => {
                                 </View>
                             </TouchableOpacity>
                             :
-                            <TouchableOpacity onPress={() => nav.navigate("Appointment")}>
+                            <TouchableOpacity onPress={() => handleDetail(item)}>
                                 <View key={item.id} style={[style.notificationContainer, item.is_read ? style.read : style.unread]}>
                                     <View style={style.header}>
                                         <Text style={style.typeText}>

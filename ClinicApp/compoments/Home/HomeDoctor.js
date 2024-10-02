@@ -30,7 +30,7 @@ const HomeDoctor = () => {
     const [selectedDoctor, setSelectedDoctor] = useState(null);
     const [show, setShow] = useState(false);
     const [loading, setLoading] = useState(false);
-
+    const [showNurse, setShowNurse] = useState(false)
 
     const handleView = (doctor) => {
         loadDoctorDetail(doctor)
@@ -41,13 +41,14 @@ const HomeDoctor = () => {
         setShow(false);
     };
 
+
     const loadNew = async () => {
         try {
             let res = await APIs.get(endpoints['new'])
             const newBanners = res.data.map(image => ({ url: image.image }));
             setBanners(newBanners);
         } catch (ex) {
-            Alert.alert("Trang chủ", "Bị lỗi.")
+            Alert.alert("VítalCare Clinic", "Bị lỗi.")
         }
     }
 
@@ -56,7 +57,7 @@ const HomeDoctor = () => {
             let res = await APIs.get(endpoints['medicine'])
             setMedicine(res.data.results)
         } catch (ex) {
-            Alert.alert("Trang chủ", "Bị lỗi khi loading thuốc.")
+            Alert.alert("VítalCare Clinic", "Bị lỗi khi loading thuốc.")
         }
     }
 
@@ -89,18 +90,18 @@ const HomeDoctor = () => {
 
     const loadDoctorDetail = async (doctor) => {
         setLoading(true)
-        try{
+        try {
             let res = await APIs.get(endpoints['doctorDetail'](doctor.id))
             setSelectedDoctor(res.data)
-            
-        }catch(ex){
-            Alert.alert("Thông báo", "Loading thông tin bác sĩ lỗi.")
-        }finally{
+
+        } catch (ex) {
+            Alert.alert("VítalCare Clinic", "Loading thông tin bác sĩ lỗi.")
+        } finally {
             setLoading(false);
         }
     }
 
-    
+
 
     useEffect(() => {
         loadNew();
@@ -113,7 +114,7 @@ const HomeDoctor = () => {
     //         loadInfo()
     //     }
     // }, [user.id, user.role])
-    
+
 
     const goToNextPage = () => {
         let nextIndex = Math.ceil(scrollX._value / width) + 1;
@@ -141,7 +142,7 @@ const HomeDoctor = () => {
         return () => clearInterval(interval); // Clear interval on component unmount
     }, []);
 
-    
+
     if (show && selectedDoctor) {
         return <Doctor doctor={selectedDoctor} onBack={handleBack} />;
     }
@@ -149,7 +150,7 @@ const HomeDoctor = () => {
     return (
         <ScrollView style={styles.container}>
             <View style={styles.headerContainer}>
-                <View style={{flex: 1}}>
+                <View style={{ flex: 1 }}>
                     {user.role === 'doctor' ? (
                         <Text style={styles.username}>{doctor?.first_name} {doctor?.last_name}</Text>
                     ) : user.role === 'nurse' ? (
@@ -160,36 +161,45 @@ const HomeDoctor = () => {
                     <Text style={styles.email}>{user.email}</Text>
                 </View>
                 <Image
-                    source={{ uri: user.avatar}} // Đường dẫn đến ảnh avatar
+                    source={{ uri: user.avatar }} // Đường dẫn đến ảnh avatar
                     style={styles.avatar}
                 />
             </View>
 
             <View style={styles.iconGrid}>
-                <TouchableOpacity style={styles.iconBox} onPress={() => nav.navigate('Appointment')}>
-                    <FontAwesome name='stethoscope' size={25} color="#835741" />
-                    <Text>Danh sách</Text>
-                    <Text>lịch khám</Text>
-                </TouchableOpacity>
+                {nurse && nurse.position === 'payment_nurse' ?
+                    <TouchableOpacity style={styles.iconBox}>
+                        <FontAwesome name='stethoscope' size={25} color="#835741" />
+                        <Text style={{fontFamily: 'serif'}}>Kết quả</Text>
+                        <Text style={{fontFamily: 'serif'}}>khám bệnh</Text>
+                    </TouchableOpacity> 
+                    :
+                    <TouchableOpacity style={styles.iconBox} onPress={() => nav.navigate('Appointment')}>
+                        <FontAwesome name='stethoscope' size={25} color="#835741" />
+                        <Text style={{fontFamily: 'serif'}}>Danh sách</Text>
+                        <Text style={{fontFamily: 'serif'}}>lịch khám</Text>
+                    </TouchableOpacity>
+                }
+
                 <TouchableOpacity style={styles.iconBox}>
                     <FontAwesome name='users' size={25} color="#835741" />
-                    <Text>Danh sách</Text>
-                    <Text>bệnh nhân</Text>
+                    <Text style={{fontFamily: 'serif'}}>Danh sách</Text>
+                    <Text style={{fontFamily: 'serif'}}>bệnh nhân</Text>
                 </TouchableOpacity>
                 {user.role === 'doctor' ?
-                <TouchableOpacity style={styles.iconBox}
-                    onPress={() => handleView(doctor)}>
-                    <FontAwesome name='user-md' size={25} color="#835741" />
-                    <Text>Thông tin</Text>
-                    <Text>bác sĩ</Text>
-                </TouchableOpacity>
-                : 
-                <TouchableOpacity style={styles.iconBox}
-                    onPress={() => nav.navigate("Nurse")}>
-                    <FontAwesome name='user-md' size={25} color="#835741" />
-                    <Text>Thông tin</Text>
-                    <Text>y tá</Text>
-                </TouchableOpacity>
+                    <TouchableOpacity style={styles.iconBox}
+                        onPress={() => handleView(doctor)}>
+                        <FontAwesome name='user-md' size={25} color="#835741" />
+                        <Text style={{fontFamily: 'serif'}}>Thông tin</Text>
+                        <Text style={{fontFamily: 'serif'}}>bác sĩ</Text>
+                    </TouchableOpacity>
+                    :
+                    <TouchableOpacity style={styles.iconBox}
+                        onPress={() => setShowNurse(!nurse)}>
+                        <FontAwesome name='user-md' size={25} color="#835741" />
+                        <Text style={{fontFamily: 'serif'}}>Thông tin</Text>
+                        <Text style={{fontFamily: 'serif'}}>y tá</Text>
+                    </TouchableOpacity>
                 }
             </View>
 
@@ -290,7 +300,7 @@ const HomeDoctor = () => {
                     <View style={MyStyles.loadingContainer}>
                         <View style={MyStyles.overlay} />
                         <View style={MyStyles.logoContainer}>
-                            <Image source={{uri: 'https://res.cloudinary.com/dr9h3ttpy/image/upload/v1726585796/logo1.png'}} style={MyStyles.logo} />
+                            <Image source={{ uri: 'https://res.cloudinary.com/dr9h3ttpy/image/upload/v1726585796/logo1.png' }} style={MyStyles.logo} />
                         </View>
                         <ActivityIndicator size="small" color="#ffffff" />
                     </View>

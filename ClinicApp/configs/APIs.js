@@ -1,5 +1,6 @@
 import axios from "axios";
 
+// const BASE_URL = 'http://192.168.234.39:8000/';
 const BASE_URL = 'http://192.168.1.252:8000/';
 
 export const endpoints = {
@@ -45,7 +46,19 @@ export const endpoints = {
     'update-doctor-HM': (patientId) => `/patient/${patientId}/update_doctor/`,
     'update-HM': (patientId) => `/patient/${patientId}/update_health_monitoring/`,
     'predict': '/predict/',
-    'forum': '/forum/'
+    'forum': '/forum/',
+    'create-forum': '/forum/create_forum/',
+    'forum-detail': (forumId) => `/forum/${forumId}`,
+    'forum-delete': (forumId) => `/forum/${forumId}/delete_forum/`,
+    'forum-update': (forumId) => `/forum/${forumId}/update_forum/`,
+    'answer-forum': (forumId) => `/forum/${forumId}/create_answer/`,
+    'list-answer-forum': (forumId) => `/forum/${forumId}/list_answer/`,
+    'invoice': (patientId) => `/patient/${patientId}/invoice/`,
+    'require-invoice': (patientId) => `/patient/${patientId}/require/`,
+    'create-invoice': (prescriptionId) => `prescription/${prescriptionId}/invoice/`,
+    'delete-answer': (forumId, answerId) => `/forum/${forumId}/answer/${answerId}/`,
+    'pres-info': (namePatient, date) => `/prescription/info/?name=${namePatient}&appointment=${date}`,
+    'cacul-invoice': (prescriptionId) => `prescription/${prescriptionId}/invoice/`,
 }
 
 export const authApi = (token) => {

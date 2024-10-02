@@ -20,8 +20,11 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from clinicapi.admin import admin_site
+from clinicapi.views import RemoveAnswer
 
-
+remove_answer = RemoveAnswer.as_view({
+    'delete': 'destroy',
+})
 schema_view = get_schema_view(
     openapi.Info(
         title="Clinic Management API",
@@ -48,4 +51,6 @@ urlpatterns = [
             schema_view.with_ui('redoc', cache_timeout=0),
             name='schema-redoc'),
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    path('forum/<int:question>/answer/<int:answer>/', remove_answer,
+         name='remove_answe_from_question'),
 ]

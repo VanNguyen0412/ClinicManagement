@@ -25,6 +25,7 @@ SECRET_KEY = 'django-insecure-a_$_vzt@o1oin%rp&-1x=ftngh)y)*gpy21crv&9c1f!(tyja-
 DEBUG = True
 
 ALLOWED_HOSTS = ['192.168.1.252']
+# ALLOWED_HOSTS = ['192.168.234.39']
 
 MEDIA_ROOT = f"{BASE_DIR}/clinicapi/static/"
 

@@ -193,6 +193,7 @@ class Notification(BaseModel):
     class Type(models.TextChoices):
         APPOINTMENT = 'appointment'
         MEDICINE = 'medicine'
+        INVOICE = 'invoice'
         GENERAL = 'general'
 
     type = models.CharField(max_length=255, choices=Type.choices, default=Type.APPOINTMENT)

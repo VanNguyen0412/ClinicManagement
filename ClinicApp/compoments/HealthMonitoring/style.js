@@ -1,11 +1,11 @@
 import { StyleSheet } from "react-native";
 
 export default StyleSheet.create({
-    show:{
-        borderWidth: 1, 
-        borderColor: '#835741', 
-        paddingVertical: 20,  
-        width: '30%', 
+    show: {
+        borderWidth: 1,
+        borderColor: '#835741',
+        paddingVertical: 20,
+        width: '30%',
         // borderRadius: 150,
         alignSelf: 'center',
     },
@@ -34,11 +34,11 @@ export default StyleSheet.create({
         fontFamily: 'serif'
 
     },
-    day:{ 
-        marginBottom: 5, 
-        fontFamily: 'serif', 
-        fontSize: 17, 
-        fontWeight:'700' 
+    day: {
+        marginBottom: 5,
+        fontFamily: 'serif',
+        fontSize: 17,
+        fontWeight: '700'
     },
     container: {
         flex: 1,
@@ -57,5 +57,17 @@ export default StyleSheet.create({
         shadowRadius: 3,
         borderWidth: 1,
         borderColor: '#835741'
+    },
+    content: {
+        fontFamily: 'serif',
+        fontSize: 15,
+        marginTop: 10
+    },
+    contentAdd: {
+        fontFamily: 'serif',
+        fontSize: 15,
+        marginTop: 10,
+        textAlign: 'center',
+        fontWeight: '700'
     }
 })

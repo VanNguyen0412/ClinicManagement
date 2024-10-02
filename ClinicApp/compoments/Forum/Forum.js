@@ -1,17 +1,15 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TextInput, Modal, ScrollView, Image, TouchableOpacity, Alert } from "react-native";
 import MyStyles from "../../styles/MyStyles";
-import { TouchableOpacity } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
-import APIs, { endpoints } from "../../configs/APIs";
-import { Image } from "react-native";
-import { ScrollView } from "react-native";
+import { useContext, useEffect, useState } from "react";
+import APIs, { authApi, endpoints } from "../../configs/APIs";
 import moment from "moment";
-import { Modal } from "react-native";
-import { ActivityIndicator } from "react-native-paper";
-import { TextInput } from "react-native";
+import { ActivityIndicator, Menu, PaperProvider } from "react-native-paper";
 import * as ImagePicker from 'expo-image-picker';
-import { Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import ForumDetail from "./ForumDetail";
+import { MyUserContext } from "../../configs/Context";
+import styles from "./styles";
 
 const Forum = () => {
     const [forums, setForums] = useState([]);
@@ -19,6 +17,87 @@ const Forum = () => {
     const [show, setShow] = useState(false);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
+    const [image, setImage] = useState(null)
+    const [nav, setNav] = useState(false)
+    const [detail, setDetail] = useState(null)
+    const user = useContext(MyUserContext);
+    const [visibleMenus, setVisibleMenus] = useState({});  
+    const [update, setUpdate] = useState(false);
+
+    const handleUpdate = async (forumId) => {
+        setLoading(true)
+        try{
+            const token = await AsyncStorage.getItem("token");
+            if (!token) {
+                Alert.alert("Error", "No access token found.");
+                return;
+            }
+            const formData = new FormData()
+            formData.append('title', title)
+            formData.append('content', content)
+            let res = await authApi(token).patch(endpoints['forum-update'](forumId), formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            if (res.status === 200){
+                Alert.alert("VítalCare Clinic", "Đã chỉnh sửa thành công")
+            }else if (res.status === 400){
+                Alert.alert("VítalCare Clinic", "Bạn không có quyền thực hiện điều này.")
+            }
+        }catch(error){
+            console.error(error)
+        }finally{
+            setLoading(false)
+        }
+    }
+
+    const handleDelete = async (forumId) => {
+        setLoading(true)
+        try {
+            const token = await AsyncStorage.getItem("token");
+            if (!token) {
+                Alert.alert("Error", "No access token found.");
+                return;
+            }
+            let res = await authApi(token).delete(endpoints['forum-delete'](forumId))
+            if (res.status === 204) {
+                Alert.alert("VítalCare Clinic", "Đã xóa diễn đàn thành công.");
+                loadForumData();
+            } else {
+                console.error("Error creating forum:", response.data);
+                Alert.alert("Error", "Xóa diễn đàn bị lỗi!!!");
+            }
+        }catch(error){
+            console.error(error)
+        }finally{
+            setLoading(false)
+        }
+    }
+
+    const handleMenuToggle = (index) => {
+        setVisibleMenus((prev) => ({
+            ...prev,
+            [index]: !prev[index],  
+        }));
+    };
+    
+    const handleDismissMenu = (index) => {
+        setVisibleMenus((prev) => ({
+            ...prev,
+            [index]: false,  
+        }));
+    };
+
+    const handleDetail = (forumId) => {
+        loadDetail(forumId)
+        setNav(!nav)
+    }
+
+    const handleBackNav = () => {
+        setNav(!nav)
+    }
 
     const handleShow = () => {
         setShow(!show)
@@ -27,8 +106,8 @@ const Forum = () => {
     const loadForumData = async () => {
         setLoading(true)
         try {
-            const response = await APIs.get(endpoints["forum"]); // Giả sử bạn có endpoint để lấy danh sách diễn đàn
-            setForums(response.data); // Giả sử dữ liệu về diễn đàn từ API trả về
+            const response = await APIs.get(endpoints["forum"]);
+            setForums(response.data);
         } catch (error) {
             console.error("Error loading forum data:", error);
         } finally {
@@ -36,12 +115,10 @@ const Forum = () => {
         }
     };
 
-    useEffect(() => {
-        loadForumData();
-    }, []);
 
-    const picker = async () =>{
-        let {status} = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    const picker = async () => {
+        let { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted')
             Alert.alert("ĐĂNG KÝ", "Không tải được ảnh!");
         else {
@@ -51,14 +128,95 @@ const Forum = () => {
                 aspect: [4, 3],
                 quality: 1,
             });
-            
+
             if (!res.canceled)
-                change(res.assets[0], 'avatar');
+                setImage(res.assets[0]);
         }
     };
 
+    const handleCreate = async () => {
+        if (!title || !content || !image ){
+            Alert.alert("VítalCare Clinic", "Thiếu thông tin. Hãy điền đủ thông tin yêu cầu.")
+        }
+        setLoading(true)
+        try {
+            const token = await AsyncStorage.getItem("token");
+            if (!token) {
+                Alert.alert("Error", "No access token found.");
+                return;
+            }
+            const formData = new FormData()
+            const filename = image.uri.split("/").pop();
+            const match = /\.(\w+)$/.exec(filename);
+            const fileType = match ? `image/${match[1]}` : `image`;
+
+            // formData.append('image', image)
+            if (image) {
+                formData.append('image', {
+                    uri: image.uri,
+                    name: filename,
+                    type: fileType
+                });
+            }
+            formData.append('title', title)
+            formData.append('content', content)
+            let res = await authApi(token).post(endpoints['create-forum'], formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            if (res.status === 201) {
+                Alert.alert("VítalCare Clinic", "Đã tạo diễn đàn thành công")
+                setShow(!show)
+                loadForumData()
+            }else if (res.status === 400){
+                Alert.alert("VítalCare Clinic", "Thiếu thông tin. Hãy điền đủ thông tin yêu cầu.")
+            }
+
+        } catch (error) {
+            if (error.response) {
+                console.error("Network error", error);
+            }
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const loadDetail = async (forumId) => {
+        setLoading(true)
+        try {
+            const token = await AsyncStorage.getItem("token");
+            if (!token) {
+                Alert.alert("Error", "No access token found.");
+                return;
+            }
+            let res = await authApi(token).get(endpoints['forum-detail'](forumId))
+            setDetail(res.data)
+
+        } catch (error) {
+            if (error.response) {
+                console.error(error)
+                Alert.alert("VítalCare Clinic", "Bị lỗi khi load thông tin!");
+            } else {
+                console.error("Network error", error);
+                Alert.alert("VítalCare Clinic", "Có lỗi xảy ra, vui lòng thử lại sau")
+            }
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        loadForumData();
+    }, [user]);
+
+
+    if (nav && detail) {
+        return <ForumDetail detail={detail} onBack={handleBackNav} />
+    }
+
     return (
-        <>
+        <PaperProvider>
             <View style={MyStyles.headerList}>
                 <View>
                     <Text style={MyStyles.titleList}>Diễn Đàn Câu Hỏi</Text>
@@ -89,26 +247,44 @@ const Forum = () => {
                             style={styles.input}
                             value={content}
                             onChangeText={setContent}
+                            multiline
+                            numberOfLines={4}
                             placeholder="Nhập nội dung"
                         />
                         <TouchableOpacity onPress={picker}>
-                            <Text style={styles.textAvatar}>Chọn hình ảnh</Text>
+                            <Text style={styles.textAvatar}>{image ? 'Chọn lại hình ảnh': 'Chọn hình ảnh'}</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.buttonRecord} onPress={handleShow}>
+                        {image && <Image source={{uri: image.uri}}  style={styles.image}/>}
+                        <TouchableOpacity style={styles.buttonRecord} onPress={handleCreate}>
                             <Text style={styles.buttonText}>Tạo mới</Text>
                         </TouchableOpacity>
                     </View>
                 )}
                 {forums.map((forum, index) => (
-                    <View key={index} style={styles.forumItem}>
-                        <View style={styles.avatarContainer}>
-                            <Image source={{ uri: forum.image }} style={styles.avatar} />
-                        </View>
-                        <View style={styles.contentContainer}>
-                            <Text style={styles.patientName}>{forum.patient.full_name}</Text>
-                            <Text style={{ fontFamily: 'serif', fontSize: 13, marginBottom: 5, }} >{moment(forum.created_date).format('DD MMMM YYYY HH:mm:ss')}</Text>
-                            <Text style={styles.titleText}>Tiêu đề: {forum.title}</Text>
-                            <Text style={{ fontFamily: 'serif', }} >{forum.content.substring(0, 50)}...</Text>
+                    <View style={{flexDirection: 'row', marginBottom: 10}}>
+                        <TouchableOpacity key={index} style={styles.forumItem} onPress={() => handleDetail(forum.id)}>
+                            <View style={styles.avatarContainer}>
+                                <Image source={{ uri: forum.image }} style={styles.avatar} />
+                            </View>
+                            <View style={styles.contentContainer}>
+                                <Text style={styles.patientName}>{forum.patient.full_name}</Text>
+                                <Text style={{ fontFamily: 'serif', fontSize: 13, marginBottom: 5, }} >{moment(forum.created_date).format('DD MMMM YYYY HH:mm:ss')}</Text>
+                                <Text style={styles.titleText}>Tiêu đề: {forum.title}</Text>
+                                <Text style={{ fontFamily: 'serif', }} >{forum.content.substring(0, 50)}...</Text>
+                            </View>
+
+                        </TouchableOpacity>
+                        <View style={{ justifyContent: 'center', alignItems: 'center', flex: 0.5 }}>
+                            <Menu
+                                visible={visibleMenus[index]}
+                                onDismiss={() => handleDismissMenu(index)}
+                                anchor={
+                                    <TouchableOpacity onPress={() => handleMenuToggle(index)}>
+                                        <FontAwesome name='ellipsis-v' size={20} color='#8B4513' />
+                                    </TouchableOpacity>}>
+                                <Menu.Item onPress={() => { }} title="Chỉnh sửa" leadingIcon="update" />
+                                <Menu.Item onPress={() => handleDelete(index)} title="Xóa" leadingIcon="delete" />
+                            </Menu>
                         </View>
                     </View>
                 ))}
@@ -129,127 +305,8 @@ const Forum = () => {
                 </Modal>
             )
             }
-        </>
+        </PaperProvider>
     )
 }
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 10,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 10,
-        fontFamily: 'serif'
 
-    },
-    forumItem: {
-        flexDirection: 'row',
-        backgroundColor: '#fff',
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 10,
-        padding: 10,
-        marginBottom: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.3,
-        shadowRadius: 2,
-        elevation: 2,
-    },
-    avatarContainer: {
-        width: 80,
-        height: 80,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 40,
-        overflow: 'hidden',
-        marginRight: 10,
-    },
-    avatar: {
-        width: '100%',
-        height: '100%',
-    },
-    contentContainer: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    patientName: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        fontFamily: 'serif'
-
-    },
-    titleText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 5,
-        fontFamily: 'serif'
-
-    },
-    moreText: {
-        color: '#835741',
-        textAlign: 'center',
-        fontWeight: 'bold',
-        marginTop: 10,
-        fontFamily: 'serif'
-
-    },
-    button: {
-        backgroundColor: '#8B4513',
-        borderRadius: 5,
-        padding: 10,
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    buttonRecord: {
-        backgroundColor: '#fff',
-        borderRadius: 5,
-        padding: 10,
-        alignItems: 'center',
-        marginBottom: 10,
-        width: '60%',
-        alignSelf: 'center',
-        borderColor: '#835741',
-        borderWidth: 0.5,
-
-    },
-    buttonText1: {
-        color: '#FFF',
-        fontWeight: 'bold',
-        fontSize: 15,
-        fontFamily: 'serif'
-    },
-    buttonText: {
-        color: '#835741',
-        fontWeight: 'bold',
-        fontSize: 15,
-        fontFamily: 'serif'
-    },
-    label: {
-        fontSize: 16,
-        marginBottom: 5,
-        fontWeight: '600',
-        fontFamily: 'serif'
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#8B4513',
-        borderRadius: 5,
-        padding: 10,
-        marginBottom: 15,
-        fontFamily: 'serif',
-    },
-    textAvatar: {
-        fontFamily: 'serif', 
-        fontSize: 15,
-        textAlign: 'center',
-        marginBottom: 10,
-        color: '#835741'
-    }
-});
 export default Forum;

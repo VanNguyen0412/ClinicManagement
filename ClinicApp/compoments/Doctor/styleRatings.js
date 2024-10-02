@@ -72,6 +72,12 @@ export default StyleSheet.create({
     color: '#333',
     fontFamily: 'serif'
   },
+  contentRole: {
+    fontSize: 14,
+    color: '#333',
+    fontFamily: 'serif',
+    textAlign: 'center'
+  },
   contentDate: {
     fontSize: 12,
     color: '#333',

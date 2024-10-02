@@ -36,7 +36,7 @@ const ListDoctor = () => {
             setSelectedDoctor(res.data)
             
         }catch(ex){
-            Alert.alert("Thông báo", "Loading thông tin bác sĩ lỗi.")
+            Alert.alert("VítalCare Clinic", "Loading thông tin bác sĩ lỗi.")
         }finally{
             setLoading(false);
         }
@@ -52,7 +52,7 @@ const ListDoctor = () => {
             }
             console.info(selectedSpecialty)
         }catch(ex){
-            Alert.alert("Trang chủ", "Bị lỗi khi loading thuốc.")
+            Alert.alert("VítalCare Clinic", "Bị lỗi khi loading thuốc.")
         }finally{
             setLoading(false);
         }

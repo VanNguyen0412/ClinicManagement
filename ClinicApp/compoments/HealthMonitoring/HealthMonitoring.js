@@ -84,7 +84,6 @@ const HealthMonitoring = () => {
 
     return (
         <View style={{ flex: 1 }}>
-            {/* Header */}
             <View style={MyStyles.headerList}>
                 <TouchableOpacity onPress={() => nav.navigate("Home")}>
                     <FontAwesome name="arrow-left" size={24} color="#835741" />
@@ -97,7 +96,6 @@ const HealthMonitoring = () => {
                 </TouchableOpacity>
             </View>
 
-            {/* Form to input blood pressure */}
             {showForm && (
                 <ScrollView style={{ padding: 12 }}>
                     {days.map((day, index) => (
@@ -128,21 +126,18 @@ const HealthMonitoring = () => {
                         </View>
                     ))}
 
-                    {/* Predict Button */}
                     {days.every((day) => bloodPressure[day]?.systolic && bloodPressure[day]?.diastolic) && (
                         <TouchableOpacity style={style.button} onPress={handlePredict}>
                             <Text style={style.buttonText1}>Dự Đoán</Text>
                         </TouchableOpacity>
                     )}
 
-                    {/* Display Prediction */}
                     {prediction !== null && (
                         <Text style={{ marginTop: 15, fontFamily: 'serif' }}>Prediction: {prediction === 1 ? 'Có nguy cơ huyết áp cao' : 'Huyết áp bình thường'}</Text>
                     )}
                 </ScrollView>
             )}
 
-            {/* Plus Icon to start input */}
             {!showForm && (
                 <View style={style.container}>
                     <TouchableOpacity

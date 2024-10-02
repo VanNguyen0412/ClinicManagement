@@ -306,6 +306,14 @@ class InvoiceSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class InvoiceDetailSerializer(InvoiceSerializer):
+    prescription = PrescriptionSerializer()
+
+    class Meta:
+        model = InvoiceSerializer.Meta.model
+        fields = InvoiceSerializer.Meta.fields
+
+
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment

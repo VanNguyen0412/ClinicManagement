@@ -50,14 +50,13 @@ const Appointment = () => {
       } else if (user.role === 'doctor') {
         let res = await authApi(token).get(endpoints['appointment-confirm']);
         setAppointment(res.data)
-
-
+        
       } else if (user.role === 'nurse') {
         let res = await authApi(token).get(endpoints['appointment-pending']);
         setAppointment(res.data)
       }
     } catch (ex) {
-      Alert.alert("Lịch Khám", "Loading thông tin lịch khám lỗi")
+      Alert.alert("VítalCare Clinic", "Loading thông tin lịch khám lỗi")
     } finally {
       setLoading(false);
     }

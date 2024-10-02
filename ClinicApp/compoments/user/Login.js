@@ -62,7 +62,7 @@ const Login = ({ navigation, route }) => {
                 "Error response:",
                 ex.response ? ex.response.data : ex.message
             );
-              Alert.alert("Cảnh báo", "Tên đăng nhập hoặc mật khẩu không hợp lệ!!!", [
+              Alert.alert("VítalCare Clinic", "Tên đăng nhập hoặc mật khẩu không hợp lệ!!!", [
                 {
                   text: "OK",
                   onPress: () => {},

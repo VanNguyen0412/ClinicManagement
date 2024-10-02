@@ -1,0 +1,101 @@
+{% extends 'admin/base_site.html' %}
+{% block content %}
+<h1>THỐNG KÊ DOANH THU</h1>
+
+<!-- Form để chọn tháng và năm -->
+<h2>Lọc doanh thu theo tháng hoặc năm</h2>
+
+<form method="GET" action="" style="margin-bottom: 20px;">
+    <label style="margin-right: 10px;" for="month">Tháng:</label>
+    <input style="margin-right: 10px;" type="number" id="month" name="month" min="1" max="12"
+           value="{{ request.GET.month }}">
+
+    <label style="margin-right: 10px;" for="year">Năm:</label>
+    <input style="margin-right: 10px;" type="number" id="year" name="year" min="2000" max="2100"
+           value="{{ request.GET.year }}">
+
+    <button style="padding: 10px 20px;
+                   background-color: #835741;
+                   color: white;
+                   border: none;
+                   border-radius: 5px;
+                   cursor: pointer;" type="submit">Lọc
+    </button>
+</form>
+<h2>Chi tiết doanh thu</h2>
+<table border="1" style="width: 50%; border-collapse: collapse; margin-top: 20px;">
+    <thead>
+        <tr>
+            <th>Mã Hóa Đơn</th>
+            <th>Ngày thanh toán</th>
+            <th>Số tiền</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in stats %}
+        <tr>
+            <td>{{ s.invoice_id }}</td>
+            <td>{{ s.payment_date|date:"Y-m-d" }}</td>
+            <td>{{ s.amount }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3">Không có dữ liệu</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Hiển thị tổng doanh thu -->
+<h3>Tổng doanh thu: {{ total_revenue }} VND</h3>
+
+<!-- Biểu đồ doanh thu -->
+<h2>Biểu đồ doanh thu</h2>
+
+<div style="width: 50%; margin-top: 20px;">
+    <canvas id="myChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Tạo danh sách nhãn và dữ liệu từ stats
+    let labels = [];
+    let data = [];
+    {% for s in stats %}
+    labels.push('{{ s.payment_date|date:"Y-m-d" }}');  // Format ngày tháng cho dễ đọc
+    data.push('{{ s.amount }}');
+    {% endfor %}
+
+    // Khởi tạo biểu đồ sau khi trang được tải xong
+    window.onload = function() {
+          const ctx = document.getElementById('myChart').getContext('2d');
+
+          new Chart(ctx, {
+            type: 'bar',  // Loại biểu đồ là biểu đồ cột
+            data: {
+              labels: labels,  // Nhãn trục X là các ngày thanh toán
+              datasets: [{
+                label: '# Doanh thu',
+                data: data,  // Dữ liệu là các giá trị doanh thu
+                borderWidth: 1,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',  // Màu nền của các cột
+                borderColor: 'rgba(75, 192, 192, 1)'  // Màu viền của các cột
+              }]
+            },
+            options: {
+              scales: {
+                y: {
+                  beginAtZero: true  // Bắt đầu trục Y từ 0
+                }
+              },
+              plugins: {
+                legend: {
+                  position: 'top',  // Hiển thị chú thích phía trên biểu đồ
+                },
+              }
+            }
+          });
+    }
+</script>
+{% endblock %}
+

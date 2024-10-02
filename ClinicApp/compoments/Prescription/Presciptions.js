@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, Modal, Alert } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import MyStyles from "../../styles/MyStyles";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import APIs, { authApi, endpoints } from "../../configs/APIs";
 import { Image } from "react-native";
@@ -9,13 +9,15 @@ import { ActivityIndicator } from "react-native-paper";
 import moment from "moment";
 import styles from "../Appointment/styles";
 import CreatePresciption from "../Doctor/CreatePresciption";
+import { MyUserContext } from "../../configs/Context";
 
 const Prescription = ({ onBack, appointmentId }) => {
     const [prescription, setPrescription] = useState([]);
     const [loading, setLoading] = useState(false);
     const [show, setShow] = useState(false);
     const [selectedPre, setSelectedPre] = useState(null);
-
+    const user = useContext(MyUserContext);
+    
     const handleView = (doctor) => {
         loadPrescriptionDetail(doctor)
         setShow(true);

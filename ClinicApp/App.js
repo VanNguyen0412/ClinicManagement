@@ -29,6 +29,7 @@ import NotificationDetail from "./compoments/Notification/NotificationDetail";
 import ProfilePatient from "./compoments/Patient/ProfilePatient";
 import Prescription from "./compoments/Prescription/Presciptions";
 import HealthMonitoring from "./compoments/HealthMonitoring/HealthMonitoring";
+import Invoice from "./compoments/Invoice/Invoice";
 
 
 const Stack = createStackNavigator();
@@ -39,7 +40,7 @@ const MyStackMainPatient = () => {
 
   return (
     <Stack.Navigator
-      initialRouteName="HomeDoctor"
+      initialRouteName="Home"
       screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={Home} />
       <Stack.Screen name="Doctor" component={Doctor} />
@@ -50,6 +51,7 @@ const MyStackMainPatient = () => {
       <Stack.Screen name="MedicineList" component={MedicineList} />
       <Stack.Screen name="ProfilePatient" component={ProfilePatient} />
       <Stack.Screen name="HealthMonitoring" component={HealthMonitoring} />
+      <Stack.Screen name="Invoice" component={Invoice} />
 
     </Stack.Navigator>
   );

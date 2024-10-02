@@ -53,7 +53,7 @@ const RegisterAppointment = () => {
             setDoctor(res.data);
             // console.info(selectedSpecialty)
         }catch(ex){
-            Alert.alert("Trang chủ", "Bị lỗi khi loading thuốc.")
+            Alert.alert("VítalCare Clinic", "Bị lỗi khi loading thuốc.")
         }finally{
             setLoading(false);
         }
@@ -91,7 +91,7 @@ const RegisterAppointment = () => {
 
     const registerAppointment = async () => {
         if (!appdate || !time || !dropdownValue){
-            Alert.alert("Thông báo", "Bạn nhập thiếu thông tin!");
+            Alert.alert("VítalCare Clinic", "Bạn nhập thiếu thông tin!");
         }
         setLoading(true);
         try{
@@ -113,7 +113,7 @@ const RegisterAppointment = () => {
             });
             
             if(response.status === 201){
-                Alert.alert("Lịch Hẹn", "Tạo lịch hẹn thành công. Hãy đợi xét duyệt thông qua email.");
+                Alert.alert("VítalCare Clinic", "Tạo lịch hẹn thành công. Hãy đợi xét duyệt thông qua email.");
                 setAppDate("")
                 setTime("")
                 setDropdownValue(null)
@@ -122,10 +122,10 @@ const RegisterAppointment = () => {
         }catch (error) {
             if (error.response){
                 console.error(error)
-                Alert.alert("Lịch Hẹn","Bạn nhập thiếu thông tin!");
+                Alert.alert("VítalCare Clinic","Bạn nhập thiếu thông tin!");
             }else {
                 console.error("Network error", error);
-                Alert.alert("Đánh giá", "Có lỗi xảy ra, vui lòng thử lại sau")
+                Alert.alert("VítalCare Clinic", "Có lỗi xảy ra, vui lòng thử lại sau")
             }
         } finally {
             setLoading(false);

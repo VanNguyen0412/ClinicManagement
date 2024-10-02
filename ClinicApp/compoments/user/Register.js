@@ -38,7 +38,7 @@ const Register = () => {
     const picker = async () =>{
         let {status} = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted')
-            Alert.alert("ĐĂNG KÝ", "Không tải được ảnh!");
+            Alert.alert("VítalCare Clinic", "Không tải được ảnh!");
         else {
             let res = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -54,13 +54,13 @@ const Register = () => {
 
     const register = async () => {
         if (!user.avatar) {
-            Alert.alert("ĐĂNG KÝ", "Vui lòng chọn ảnh đại diện");
+            Alert.alert("VítalCare Clinic", "Vui lòng chọn ảnh đại diện");
             return;
 
         }
 
         if(password !== confirmPassword){
-            Alert.alert("ĐĂNG KÝ", "Mật khẩu xác nhận không khớp");
+            Alert.alert("VítalCare Clinic", "Mật khẩu xác nhận không khớp");
             return;
         }
 
@@ -82,16 +82,16 @@ const Register = () => {
                 }
             });
             if(response.status === 201){
-                Alert.alert("ĐĂNG KÝ", "Đăng ký thành công, chờ xét duyệt");
+                Alert.alert("VítalCare Clinic", "Đăng ký thành công, chờ xét duyệt");
                 nav.navigate("ConfirmUser");
             }
         } catch (error) {
             if (error.response){
                 console.error("Error response:", error.response);
-                Alert.alert("ĐĂNG KÝ","Mã code hoặc Email không chính xác!");
+                Alert.alert("VítalCare Clinic","Thông tin nhập vào không chính xác!");
             }else {
                 console.error("Network error", error);
-                Alert.alert("ĐĂNG KÝ", "Có lỗi xảy ra, vui lòng thử lại sau")
+                Alert.alert("VítalCare Clinic", "Có lỗi xảy ra, vui lòng thử lại sau")
             }
         } finally {
             setLoading(false);

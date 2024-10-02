@@ -18,6 +18,7 @@ import ResultPrescription from "../HealthMonitoring/ResultPresciption";
 import { ActivityIndicator } from "react-native-paper";
 import MyStyles from "../../styles/MyStyles";
 import { RefreshControl } from "react-native";
+import Invoice from "../Invoice/Invoice";
 
 const Home = ({ route }) => {
     const nav = useNavigation()
@@ -36,6 +37,7 @@ const Home = ({ route }) => {
     const [result, setResult] = useState(false);
     const [health_monitoring, setHealthMonitoring] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [invoice, setInvoice] = useState(false);
 
     const onRefresh = async () => {
         setRefreshing(true);
@@ -54,6 +56,13 @@ const Home = ({ route }) => {
         setResult(false);
     }
 
+    const navInvoice = () => {
+        setInvoice(true)
+    }
+
+    const navBackInvoice = () => {
+        setInvoice(false);
+    }
 
     const openPatient = () => {
         nav.navigate("CreatePatient")
@@ -170,6 +179,10 @@ const Home = ({ route }) => {
         return <ResultPrescription onBack={navBack} />;
     }
 
+    if (invoice && patient.id) {
+        return <Invoice patientId={patient.id} onBack={navBackInvoice} />;
+    }
+
     return (
         <ScrollView style={styles.container}
         refreshControl={ // Thêm RefreshControl để làm mới khi kéo xuống
@@ -227,7 +240,7 @@ const Home = ({ route }) => {
                     <Text style={{fontFamily: 'serif'}}>sức khỏe</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.iconBox}>
+                <TouchableOpacity style={styles.iconBox} onPress={navInvoice}>
                     <FontAwesome name='money' size={25} color="#835741" />
                     <Text style={{fontFamily: 'serif'}}>Thanh toán</Text>
                     <Text style={{fontFamily: 'serif'}}>hóa đơn</Text>

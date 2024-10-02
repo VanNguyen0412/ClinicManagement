@@ -257,12 +257,16 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
             appointment__patient=patient
         ).exists()
         nurse = Nurse.objects.get(position='payment_nurse')
+        presciption = Prescription.objects.filter(
+            appointment__patient=patient
+        ).last()
 
         if has_prescription:
-            notification_content = f"Yêu cầu thanh toán hóa đơn cho bệnh nhân {patient}."
+            notification_content = \
+                f"Yêu cầu thanh toán hóa đơn cho bệnh nhân {patient.last_name} với lịch khám {presciption.appointment.appointment_date}."
             Notification.objects.create(
                 content=notification_content,
-                type=Notification.Type.APPOINTMENT,
+                type=Notification.Type.INVOICE,
                 user=nurse.user
             )
             return Response({'detail': 'Đã yêu cầu thành công.'}, status=status.HTTP_200_OK)
@@ -273,11 +277,16 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
     def get_invoice(self, request, pk=None):
         patient = self.get_object()
         # Kiểm tra xem bệnh nhân đã hoàn tất cuộc hẹn với toa thuốc chưa
-        prescription = Prescription.objects.get(
+        prescriptions = Prescription.objects.filter(
             appointment__patient=patient
         )
-        invoice = Invoice.objects.filter(prescription=prescription, is_paid=False)
-        serializer = InvoiceSerializer(invoice, many=True)
+        invoice = []
+        for prescription in prescriptions:
+            invoice = Invoice.objects.filter(prescription=prescription)
+
+        serializer = InvoiceDetailSerializer(invoice, many=True)
+
+        # serializer = PrescriptionSerializer(prescriptions, many=True)
         return Response(serializer.data)
 
 
@@ -374,7 +383,6 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-        # return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=['get'], url_path='name', detail=False)
     def get_doctor_name(self, request):
@@ -625,11 +633,25 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
     def get_permissions(self):
         if self.action in ['create_prescription', 'list_medicines', 'no_prescription', 'delete_prescription']:
             return [DoctorPermission()]
-        elif self.action in ['create_invoice']:
+        elif self.action in ['create_invoice', 'info']:
             return [PaymentNursePermission()]
         elif self.action in ['get_result_prescription']:
             return [PatientOwner()]
         return [permissions.AllowAny()]
+
+    @action(methods=['get'], url_path='info', detail=False)
+    def info(self, request, pk=None):
+        patient_name = request.query_params.get('name')
+        date = request.query_params.get('appointment')
+        if patient_name and date:
+            prescription = Prescription.objects.filter(
+                appointment__appointment_date=date,
+                appointment__patient__last_name__icontains=patient_name).first()
+            serializer = PrescriptionSerializer(prescription)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        else:
+            return Response({'error': 'Lỗi '}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['get'], url_path='no_medicine', detail=False)
     def no_prescription(self, request, pk=None):
@@ -853,7 +875,7 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView):
                             ParagraphStyle(name='RightAligned', fontName='bold', fontSize=16, leading=18, alignment=2))
 
                         elements = []
-                        elements.append(Paragraph("PHÒNG KHÁM TƯ NHÂN MỸ VÂN", styles['Title_TNR']))
+                        elements.append(Paragraph("PHÒNG KHÁM TƯ NHÂN VÍTALCARE CLINIC", styles['Title_TNR']))
 
                         elements.append(Spacer(1, 7))
                         elements.append(Paragraph("Trường Đại học Mở Thành phố Hồ Chí Minh", styles['Title2_TNR']))
@@ -1164,3 +1186,25 @@ class InvoiceViewSet(viewsets.ViewSet, generics.ListAPIView):
 class DoctorRatingViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Doctor.objects.all()
     serializer_class = DoctorRatingSerializer
+
+
+class RemoveAnswer(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def destroy(self, request, question=None, answer=None):
+        try:
+            question = ForumQuestion.objects.get(id=question)
+            forum_answer = ForumAnswers.objects.get(forum_question=question, id=answer)
+
+            if forum_answer.user.id != request.user.id:
+                return Response({'error': 'Bạn không có quyền xóa câu trả lời này'},
+                                status=status.HTTP_403_FORBIDDEN)
+            if forum_answer:
+                forum_answer.delete()
+                return Response({"detail": "Đã xóa câu trả lời thành công."}, status=status.HTTP_204_NO_CONTENT)
+            else:
+                return Response({"detail": "Không tìm thấy câu trả lời."}, status=status.HTTP_404_NOT_FOUND)
+        except ForumQuestion.DoesNotExist:
+            return Response({"detail": "Không tìm thấy câu hỏi."}, status=status.HTTP_404_NOT_FOUND)
+        except ForumAnswers.DoesNotExist:
+            return Response({"detail": "Không tìm thấy câu trả lời."}, status=status.HTTP_404_NOT_FOUND)

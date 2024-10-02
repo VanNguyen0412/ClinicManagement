@@ -49,7 +49,7 @@ const MedicineList = () => {
                 });
             }
         }catch(ex){
-            Alert.alert("Trang chủ", "Bị lỗi khi loading thuốc.")
+            Alert.alert("VítalCare Clinic", "Bị lỗi khi loading thuốc.")
         }finally{
             setLoading(false);
         }
@@ -69,7 +69,7 @@ const MedicineList = () => {
             let res = await APIs.get(endpoints['medicineDetail'](medicine.id))
             setSelectedMedicine(res.data)
         }catch(ex){
-            Alert.alert("Thông báo", "Loading thông tin thuốc lỗi.")
+            Alert.alert("VítalCare Clinic", "Loading thông tin thuốc lỗi.")
         }finally{
             setLoading(false);
         }

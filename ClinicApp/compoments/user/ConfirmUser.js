@@ -33,7 +33,7 @@ const ComfirmUser = () => {
 
     const confirm = async () => {
         if (!user.username || !user.otp) {
-            Alert.alert("ĐĂNG KÝ", "Vui lòng nhập đủ thông tin");
+            Alert.alert("VítalCare Clinic", "Vui lòng nhập đủ thông tin");
             return;
 
         }
@@ -51,16 +51,16 @@ const ComfirmUser = () => {
                 }
             });
             if(response.status === 200){
-                Alert.alert("ĐĂNG KÝ", "Xác nhận thành công. Tài khoản đã được kích hoạt.");
+                Alert.alert("VítalCare Clinic", "Xác nhận thành công. Tài khoản đã được kích hoạt.");
                 nav.navigate("Login");
             }
         } catch (error) {
             if (error.response){
                 console.error("Error response:", error.response);
-                Alert.alert("ĐĂNG KÝ","Username hoặc mã OTP không chính xác!");
+                Alert.alert("VítalCare Clinic","Username hoặc mã OTP không chính xác!");
             }else {
                 console.error("Network error", error);
-                Alert.alert("ĐĂNG KÝ", "Có lỗi xảy ra, vui lòng thử lại sau")
+                Alert.alert("VítalCare Clinic", "Có lỗi xảy ra, vui lòng thử lại sau")
             }
         } finally {
             setLoading(false);

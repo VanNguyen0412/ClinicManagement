@@ -36,7 +36,7 @@ const CreatePatient = () => {
             const res = await APIs.get(url)
             setPatient(res.data)
         }catch(ex){
-            Alert.alert("Trang chủ", "Bị lỗi loading.")
+            Alert.alert("TVítalCare Clinic", "Bị lỗi loading.")
         }
     }
 
@@ -46,7 +46,7 @@ const CreatePatient = () => {
 
     const handleDone = async () => {
         if (!first_name || !last_name || !birthdate || !address ||!gender || !phone){
-            Alert.alert("Thông báo", "Thiếu thông tin. Hãy điền đủ thông tin yêu cầu.")
+            Alert.alert("VítalCare Clinic", "Thiếu thông tin. Hãy điền đủ thông tin yêu cầu.")
         }
         setLoading(true);
 
@@ -71,16 +71,16 @@ const CreatePatient = () => {
                 }
             });
             if(response.status === 201){
-                Alert.alert("Hồ Sơ Cá Nhân", "Đã hoàn tất hồ sơ cá nhân.");
+                Alert.alert("VítalCare Clinic", "Đã hoàn tất hồ sơ cá nhân.");
                 nav.navigate("Home");
             }
         } catch (error) {
             if (error.response){
                 console.error("Error response:", error.response);
-                Alert.alert("Hồ Sơ Cá Nhân","Đã có lỗi, hãy thử lại!");
+                Alert.alert("VítalCare Clinic","Đã có lỗi, hãy thử lại!");
             }else {
                 console.error("Network error", error);
-                Alert.alert("Hồ Sơ Cá Nhân", "Có lỗi xảy ra, vui lòng thử lại sau")
+                Alert.alert("VítalCare Clinic", "Có lỗi xảy ra, vui lòng thử lại sau")
             }
         } finally {
             setLoading(false);

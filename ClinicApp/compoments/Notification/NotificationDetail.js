@@ -12,6 +12,7 @@ import style from "./style";
 import Toast from 'react-native-toast-message';
 // import { WebView } from 'react-native-webview';
 import { Linking } from "react-native";
+import styles from "../Appointment/styles";
 
 const NotificationDetail = ({ onBack, notificationId }) => {
     const [loading, setLoading] = useState(false);
@@ -20,11 +21,17 @@ const NotificationDetail = ({ onBack, notificationId }) => {
     const [downloading, setDownloading] = useState(false);
     const [selectedMedicine, setSelectedMedicine] = useState(null);
     const [modalVisible1, setModalVisible1] = useState(false);
+    const [nav, setNav] = useState(false);
+    const [patient, setPateint] = useState('');
+    const [date, setDate] = useState('');
+    const [invoice, setInvoice] = useState(null);
 
     const handlePress = (medicine) => {
         setSelectedMedicine(medicine);
         setModalVisible1(!modalVisible1)
     };
+
+
 
     const getStatus = (status) => {
         switch (status) {
@@ -41,6 +48,27 @@ const NotificationDetail = ({ onBack, notificationId }) => {
         }
     };
 
+    
+
+    const loadPrescription = async (patient, date) => {
+        setLoading(true)
+        try {
+            const token = await AsyncStorage.getItem("token");
+            if (!token) {
+                Alert.alert("Error", "No access token found.");
+                return;
+            }
+            let res = await authApi(token).get(endpoints['pres-info'](patient, date));
+            setInvoice(res.data)
+            // console.info(notifications)
+        } catch (ex) {
+            console.error(ex)
+            Alert.alert("VítalCare Clinic", "Bị lỗi, hãy load lại");
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const loadDetail = async () => {
         setLoading(true)
         try {
@@ -51,9 +79,10 @@ const NotificationDetail = ({ onBack, notificationId }) => {
             }
             let res = await authApi(token).post(endpoints['read-noti'](notificationId));
             setDetail(res.data)
+            // console.info(detail)
         } catch (ex) {
             console.error(ex)
-            Alert.alert("Thông báo", "Hiện thông tin lỗi");
+            Alert.alert("VítalCare Clinic", "Hiện thông tin lỗi");
         } finally {
             setLoading(false)
         }
@@ -67,11 +96,14 @@ const NotificationDetail = ({ onBack, notificationId }) => {
                 Alert.alert("Error", "No access token found.");
                 return;
             }
-            let res = await authApi(token).get(endpoints['notification-information'](notificationId));
-            setInfo(res.data)
+            if (detail && detail.type !== 'invoice') {
+                let res = await authApi(token).get(endpoints['notification-information'](notificationId));
+                setInfo(res.data)
+            }
+
         } catch (ex) {
             console.error(ex)
-            Alert.alert("Thông báo", "Hiện thông tin chi tiết bị lỗi");
+            Alert.alert("VítalCare Clinic", "Hiện thông tin chi tiết bị lỗi");
         } finally {
             setLoading(false)
         }
@@ -110,11 +142,46 @@ const NotificationDetail = ({ onBack, notificationId }) => {
             setLoading(false);
         }
     };
+
     useEffect(() => {
         loadDetail();
         loadInfo();
     }, [notificationId])
 
+    const handleFilter = (info) => {
+        const nameMatch = info.match(/bệnh nhân (.+?) với/);
+        const dateMatch = info.match(/lịch khám (\d{4}-\d{2}-\d{2})/);
+
+        const name = nameMatch ? nameMatch[1].trim() : null;
+        const date = dateMatch ? dateMatch[1].trim() : null;
+        console.info(name)
+
+        setDate(date)
+        setPateint(name)
+        setNav(true)
+        loadPrescription(name, date)
+    }
+
+    const handleCaculInvoice = async (prescriptionId) => {
+        setLoading(true)
+        try {
+            const token = await AsyncStorage.getItem("token");
+            if (!token) {
+                Alert.alert("Error", "No access token found.");
+                return;
+            }
+            let res = await authApi(token).post(endpoints['cacul-invoice'](prescriptionId))
+            if (res.status === 200){
+                Alert.alert("VítalCare Clinic", "Đã tính hóa đơn thành công")
+            }
+
+        }catch (ex) {
+            console.error(ex)
+            Alert.alert("VítalCare Clinic", "Bị lỗi khi tính hóa đơn.");
+        } finally {
+            setLoading(false)
+        }
+    }
 
 
     const renderDetailContent = () => {
@@ -145,6 +212,7 @@ const NotificationDetail = ({ onBack, notificationId }) => {
                         </View>
                     </>
                 );
+
             case 'medicine':
                 return (
                     <>
@@ -200,7 +268,7 @@ const NotificationDetail = ({ onBack, notificationId }) => {
                                                 <Text style={style.modalText}>Giá: {selectedMedicine.price} VNĐ</Text>
                                             </>
                                         )}
-                                        
+
                                         <TouchableOpacity
                                             style={style.closeButton}
                                             onPress={() => setModalVisible1(false)}>
@@ -261,7 +329,7 @@ const NotificationDetail = ({ onBack, notificationId }) => {
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>
-            {detail === null || info === null ?
+            {info === null ?
                 <Modal
                     transparent={true}
                     animationType="fade"
@@ -280,6 +348,34 @@ const NotificationDetail = ({ onBack, notificationId }) => {
                     <View>{renderDetailContent()}</View>
 
                 </>}
+            {info === null && detail !== null ?
+                <View style={{ padding: 16 }}>
+                    <Text style={style.content}>{detail.content}</Text>
+                        <TouchableOpacity style={style.invoice} onPress={() => handleFilter(detail.content)}>
+                            <Text style={{ fontFamily: 'serif', textAlign: 'center' }}>Lọc kết quả khám của bệnh nhân</Text>
+                        </TouchableOpacity>
+
+                    {nav && invoice ? (
+                        
+                        <View key={invoice.id} style={[styles.appointmentCard, styles.margin]}>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={{ fontFamily: 'serif', marginTop: 43, fontWeight: '700', flex: 1 }}>STT: {invoice.id}</Text>
+                                <View style={{ flex: 4 }}>
+                                    <Text style={styles.patientName}>{invoice.appointment.patient.full_name}</Text>
+                                    <Text style={{ marginBottom: 5, fontFamily: 'serif' }}>Ngày khám: {moment(invoice.appointment.appointment_date).format('Do MMMM, YYYY')}</Text>
+                                    <Text style={{ marginBottom: 5, fontFamily: 'serif' }}>Giờ khám: {moment(invoice.appointment.appointment_time, "HH:mm:ss.SSSSSS").format('HH:mm:ss')}</Text>
+                                    <Text style={{ marginBottom: 5, fontFamily: 'serif' }}>Triệu chứng: {invoice.symptom}</Text>
+                                    <Text style={{ marginBottom: 5, fontFamily: 'serif' }}>Chẩn đoán: {invoice.diagnosis}</Text>
+                                </View>
+                            </View>
+                            <TouchableOpacity style={styles.search1}
+                            onPress={() => handleCaculInvoice(invoice.id)}>
+                                <Text style={styles.text1}>Tính hóa đơn</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : null}
+                </View>
+                : null}
             {loading && (
                 <Modal
                     transparent={true}
