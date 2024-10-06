@@ -73,7 +73,7 @@ const HealthRecord = ({ patientId, onBack, patient }) => {
                 ))}
                 <Text style={styles.subTitle}>II. Hồ sơ khám bệnh</Text>
                 <ScrollView>
-                    {records ? <Text style={{fontFamily: 'serif', fontSize: 16, textAlign:'center'}}>
+                    {!records ? <Text style={{fontFamily: 'serif', fontSize: 16, textAlign:'center'}}>
                         Bệnh nhân <Text style={{fontWeight: 'bold'}}>{patient.name}</Text> chưa có hồ sơ khám bệnh</Text> :
                         records.map((record) => (
                             <View style={styles.recordCard} key={record.id}>

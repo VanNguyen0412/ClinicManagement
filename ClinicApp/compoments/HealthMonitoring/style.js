@@ -15,7 +15,7 @@ export default StyleSheet.create({
         borderRadius: 5,
         marginTop: 7,
         padding: 7,
-        marginBottom: 15,
+        marginBottom: 10,
         width: '98%',
         fontFamily: 'serif'
 

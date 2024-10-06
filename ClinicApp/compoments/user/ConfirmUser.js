@@ -52,7 +52,7 @@ const ComfirmUser = () => {
             });
             if(response.status === 200){
                 Alert.alert("VítalCare Clinic", "Xác nhận thành công. Tài khoản đã được kích hoạt.");
-                nav.navigate("Login");
+                nav.navigate("HomeScreen");
             }
         } catch (error) {
             if (error.response){

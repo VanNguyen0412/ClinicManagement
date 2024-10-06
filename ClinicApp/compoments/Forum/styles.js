@@ -128,6 +128,14 @@ export default StyleSheet.create({
         fontSize: 15,
         fontFamily: 'serif'
     },
+    textCancel: {
+        color: '#835741',
+        fontWeight: 'bold',
+        fontSize: 15,
+        fontFamily: 'serif',
+        textAlign: 'center',
+        marginBottom: 7
+    },
     label: {
         fontSize: 16,
         marginBottom: 5,
@@ -163,6 +171,18 @@ export default StyleSheet.create({
         textAlign: 'center',
         marginTop: 7
     },
+    textTittleName: {
+        fontFamily: 'serif',
+        fontSize: 19,
+        fontWeight: '700',
+        textAlign: 'center',
+        marginTop: 7
+    },
+    textCreated: {
+        fontFamily: 'serif',
+        textAlign: 'center',
+        marginBottom: 17
+    },
     answer: {
         flexDirection: 'row',
         borderWidth: 0.5,
@@ -170,5 +190,16 @@ export default StyleSheet.create({
         borderRadius: 6,
         borderColor: '#835741',
         marginBottom: 20
-    }
+    },
+    buttonCancel: {
+        backgroundColor: '#ccc',
+        borderRadius: 5,
+        padding: 10,
+        alignItems: 'center',
+        marginBottom: 10,
+        width: '30%',
+        alignSelf: 'center',
+        borderColor: '#835741',
+        borderWidth: 0.5,
+    },
 });

@@ -13,6 +13,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Doctor from "../Doctor/Doctor";
 import MyStyles from "../../styles/MyStyles";
 import { ActivityIndicator } from "react-native-paper";
+import { RefreshControl } from "react-native";
 
 const HomeDoctor = () => {
     const nav = useNavigation()
@@ -31,7 +32,15 @@ const HomeDoctor = () => {
     const [show, setShow] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showNurse, setShowNurse] = useState(false)
+    const [refreshing, setRefreshing] = useState(false);
 
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await loadNew();    
+        await loadMedicine();
+        await loadInfo(); 
+        setRefreshing(false);
+    };
     const handleView = (doctor) => {
         loadDoctorDetail(doctor)
         setShow(true);
@@ -45,7 +54,10 @@ const HomeDoctor = () => {
     const loadNew = async () => {
         try {
             let res = await APIs.get(endpoints['new'])
-            const newBanners = res.data.map(image => ({ url: image.image }));
+            const newBanners = res.data.map(image => ({ 
+                id: image.id, // Assuming you have an 'id' field
+                url: image.image 
+            }));
             setBanners(newBanners);
         } catch (ex) {
             Alert.alert("VítalCare Clinic", "Bị lỗi.")
@@ -148,7 +160,14 @@ const HomeDoctor = () => {
     }
 
     return (
-        <ScrollView style={styles.container}>
+        <ScrollView style={styles.container}
+        refreshControl={ // Thêm RefreshControl để làm mới khi kéo xuống
+            <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+            />
+        }
+        >
             <View style={styles.headerContainer}>
                 <View style={{ flex: 1 }}>
                     {user.role === 'doctor' ? (
@@ -222,7 +241,7 @@ const HomeDoctor = () => {
                     scrollEventThrottle={16}
                 >
                     {banners1.map((banner, index) => (
-                        <TouchableOpacity key={index} style={{ width }}>
+                        <TouchableOpacity key={index} style={{ width }} onPress={() => nav.navigate("NewDetail", {'id': banner.id})}>
                             <Image source={{ uri: banner.url }} style={styles.imageBanner} />
                         </TouchableOpacity>
                     ))}

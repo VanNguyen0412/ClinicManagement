@@ -1,6 +1,6 @@
 import axios from "axios";
 
-// const BASE_URL = 'http://192.168.234.39:8000/';
+// const BASE_URL = 'http://192.168.234.42:8000/';
 const BASE_URL = 'http://192.168.1.252:8000/';
 
 export const endpoints = {
@@ -11,6 +11,7 @@ export const endpoints = {
     'confirm-user': '/user/verify-otp/',
     'current-patient': '/patient/current/',
     'new': '/new/',
+    'new-detail': (newId) => `/new/${newId}`,
     'medicine': '/medicine/functional/',
     'medicine-all': '/medicine/',
     'doctor': '/doctorRating/',
@@ -19,6 +20,8 @@ export const endpoints = {
     'doctorRating': (doctorId) => `/doctor/${doctorId}/rating/`,
     'rating-all': (doctorId) => `/doctor/${doctorId}/ratingall/`,
     'create-rating': (doctorId) => `/doctor/${doctorId}/create_rating/`,
+    'delete-rating': (ratingId) => `/rating/${ratingId}/delete_rating/`,
+    'update-rating': (ratingId) => `/rating/${ratingId}/update_rating/`,
     'doctor-name': '/doctor/name/',
     'create-appointment': '/appointment/create/',
     'appointment-pending': '/appointment/listpending/',
@@ -29,6 +32,7 @@ export const endpoints = {
     'appointment-detail': (appointmentId) => `/appointment/${appointmentId}/`,
     'patient-record': (patientId) => `/patient/${patientId}/healthrecord/`,
     'list-noti': '/notification/list/',
+    'delete-noti': (notificationId) => `/notification/${notificationId}/`,
     'read-noti': (notificationId) => `/notification/${notificationId}/read/`,
     'notification-information': (notificationId) => `notification/${notificationId}/information/`,
     'doctor-info': '/doctor/current/',
@@ -53,12 +57,15 @@ export const endpoints = {
     'forum-update': (forumId) => `/forum/${forumId}/update_forum/`,
     'answer-forum': (forumId) => `/forum/${forumId}/create_answer/`,
     'list-answer-forum': (forumId) => `/forum/${forumId}/list_answer/`,
-    'invoice': (patientId) => `/patient/${patientId}/invoice/`,
-    'require-invoice': (patientId) => `/patient/${patientId}/require/`,
-    'create-invoice': (prescriptionId) => `prescription/${prescriptionId}/invoice/`,
+    'update-answer': (forumId, answerId) => `/forum/${forumId}/answer/${answerId}/update/`,
+    'invoice': (patientId) => `/patient/${patientId}/invoice_done/`,
+    'invoice-none': (patientId) => `/patient/${patientId}/invoice/`,
+    'require-invoice': (prescriptionId) => `/prescription/${prescriptionId}/require/`,
     'delete-answer': (forumId, answerId) => `/forum/${forumId}/answer/${answerId}/`,
-    'pres-info': (namePatient, date) => `/prescription/info/?name=${namePatient}&appointment=${date}`,
-    'cacul-invoice': (prescriptionId) => `prescription/${prescriptionId}/invoice/`,
+    'pres-info': (notificationId) => `/notification/${notificationId}/get_prescription/`,
+    'cacul-invoice': (prescriptionId) => `/prescription/${prescriptionId}/invoice/`,
+    'invoice-detail': (invoiceId) => `/invoice/${invoiceId}`,
+    
 }
 
 export const authApi = (token) => {
@@ -72,3 +79,6 @@ export const authApi = (token) => {
 export default axios.create({
     baseURL: BASE_URL
 });
+
+
+//   thanh toán momo, firebase, minh chứng thanh toán

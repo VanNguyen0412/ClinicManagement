@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, useAnimatedValue, Alert, Modal } from "re
 import MyStyles from "../../styles/MyStyles";
 import { MyUserContext } from '../../configs/Context';
 import { FontAwesome } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import APIs, { authApi, endpoints } from "../../configs/APIs";
 import { Image } from "react-native";
@@ -25,6 +25,7 @@ const NotificationDetail = ({ onBack, notificationId }) => {
     const [patient, setPateint] = useState('');
     const [date, setDate] = useState('');
     const [invoice, setInvoice] = useState(null);
+    const user = useContext(MyUserContext);
 
     const handlePress = (medicine) => {
         setSelectedMedicine(medicine);
@@ -48,9 +49,9 @@ const NotificationDetail = ({ onBack, notificationId }) => {
         }
     };
 
-    
 
-    const loadPrescription = async (patient, date) => {
+
+    const loadPrescription = async (notificationId) => {
         setLoading(true)
         try {
             const token = await AsyncStorage.getItem("token");
@@ -58,7 +59,7 @@ const NotificationDetail = ({ onBack, notificationId }) => {
                 Alert.alert("Error", "No access token found.");
                 return;
             }
-            let res = await authApi(token).get(endpoints['pres-info'](patient, date));
+            let res = await authApi(token).get(endpoints['pres-info'](notificationId));
             setInvoice(res.data)
             // console.info(notifications)
         } catch (ex) {
@@ -96,11 +97,9 @@ const NotificationDetail = ({ onBack, notificationId }) => {
                 Alert.alert("Error", "No access token found.");
                 return;
             }
-            if (detail && detail.type !== 'invoice') {
-                let res = await authApi(token).get(endpoints['notification-information'](notificationId));
-                setInfo(res.data)
-            }
-
+            let res = await authApi(token).get(endpoints['notification-information'](notificationId));
+            setInfo(res.data)
+                // console.info(info)
         } catch (ex) {
             console.error(ex)
             Alert.alert("VítalCare Clinic", "Hiện thông tin chi tiết bị lỗi");
@@ -148,18 +147,9 @@ const NotificationDetail = ({ onBack, notificationId }) => {
         loadInfo();
     }, [notificationId])
 
-    const handleFilter = (info) => {
-        const nameMatch = info.match(/bệnh nhân (.+?) với/);
-        const dateMatch = info.match(/lịch khám (\d{4}-\d{2}-\d{2})/);
-
-        const name = nameMatch ? nameMatch[1].trim() : null;
-        const date = dateMatch ? dateMatch[1].trim() : null;
-        console.info(name)
-
-        setDate(date)
-        setPateint(name)
+    const handleFilter = (notificationId) => {
         setNav(true)
-        loadPrescription(name, date)
+        loadPrescription(notificationId)
     }
 
     const handleCaculInvoice = async (prescriptionId) => {
@@ -171,11 +161,11 @@ const NotificationDetail = ({ onBack, notificationId }) => {
                 return;
             }
             let res = await authApi(token).post(endpoints['cacul-invoice'](prescriptionId))
-            if (res.status === 200){
+            if (res.status === 200) {
                 Alert.alert("VítalCare Clinic", "Đã tính hóa đơn thành công")
             }
 
-        }catch (ex) {
+        } catch (ex) {
             console.error(ex)
             Alert.alert("VítalCare Clinic", "Bị lỗi khi tính hóa đơn.");
         } finally {
@@ -306,8 +296,8 @@ const NotificationDetail = ({ onBack, notificationId }) => {
                             <Text style={style.subTitle}>II. Thông tin khám bệnh:</Text>
                             <Text style={style.text}>{`Tên bác sĩ: ${info.doctor.full_name}`}</Text>
                             <Text style={style.text}>{`Chuyên khoa: ${info.doctor.expertise}`}</Text>
-                            <Text style={style.text}>{`Triệu chứng: ${info.diagnosis}`}</Text>
-                            <Text style={style.text}>{`Chẩn đoán: ${info.symptom}`}</Text>
+                            <Text style={style.text}>{`Chẩn đoán: ${info.diagnosis}`}</Text>
+                            <Text style={style.text}>{`Triệu chứng: ${info.symptom}`}</Text>
 
                         </View>
                     </>
@@ -351,12 +341,14 @@ const NotificationDetail = ({ onBack, notificationId }) => {
             {info === null && detail !== null ?
                 <View style={{ padding: 16 }}>
                     <Text style={style.content}>{detail.content}</Text>
-                        <TouchableOpacity style={style.invoice} onPress={() => handleFilter(detail.content)}>
+                    {user.role === 'nurse' &&
+                        <TouchableOpacity style={style.invoice} onPress={() => handleFilter(detail.id)}>
                             <Text style={{ fontFamily: 'serif', textAlign: 'center' }}>Lọc kết quả khám của bệnh nhân</Text>
-                        </TouchableOpacity>
+                        </TouchableOpacity>}
+
 
                     {nav && invoice ? (
-                        
+
                         <View key={invoice.id} style={[styles.appointmentCard, styles.margin]}>
                             <View style={{ flexDirection: 'row' }}>
                                 <Text style={{ fontFamily: 'serif', marginTop: 43, fontWeight: '700', flex: 1 }}>STT: {invoice.id}</Text>
@@ -369,7 +361,7 @@ const NotificationDetail = ({ onBack, notificationId }) => {
                                 </View>
                             </View>
                             <TouchableOpacity style={styles.search1}
-                            onPress={() => handleCaculInvoice(invoice.id)}>
+                                onPress={() => handleCaculInvoice(invoice.id)}>
                                 <Text style={styles.text1}>Tính hóa đơn</Text>
                             </TouchableOpacity>
                         </View>

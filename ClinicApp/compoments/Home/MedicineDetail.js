@@ -38,7 +38,7 @@ const MedicineDetail = ({ medicine, onBack }) => {
                 <View style={styleMedicine.imageMedicineBorder}>
                     <Image source={{ uri: medicine.image }} style={styleMedicine.imageMedicine}/>
                     <View style={styleMedicine.iso}>
-                        <Text style={styleMedicine.isoText}>Sản phẩm 100% chính hãng, chứng nhận an toàn ISO</Text>
+                        <Text style={styleMedicine.isoText}>Sản phẩm chính hãng đã chứng nhận an toàn ISO</Text>
                     </View>
                 </View>
                 <Text style={styleMedicine.medicineName}>{medicine.name}</Text>

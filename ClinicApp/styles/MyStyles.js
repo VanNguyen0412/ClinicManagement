@@ -10,7 +10,7 @@ export default StyleSheet.create({
         padding: 10,
         paddingTop: 40,
         paddingBottom: 13,
-        backgroundColor:'#ffeddc'
+        backgroundColor: '#ffeddc'
     },
     titleList: {
         fontSize: 18,
@@ -20,10 +20,10 @@ export default StyleSheet.create({
         // marginLeft: 75
     },
     bonusMore: {
-        marginBottom: 30, 
-        textAlign: 'center', 
-        fontSize: 16, 
-        marginTop: 5, 
+        marginBottom: 30,
+        textAlign: 'center',
+        fontSize: 16,
+        marginTop: 5,
         color: '#835741',
         fontFamily: 'serif'
     },
@@ -38,10 +38,10 @@ export default StyleSheet.create({
         width: '100%',
     },
     closeButtonText: {
-    color: '#835741',
-    fontSize: 15,
-    fontWeight: 'bold',
-    fontFamily: 'serif'
+        color: '#835741',
+        fontSize: 15,
+        fontWeight: 'bold',
+        fontFamily: 'serif'
     },
     flex: {
         flexDirection: 'row'
@@ -67,5 +67,33 @@ export default StyleSheet.create({
         width: 100,  // Kích thước logo
         height: 100,
         borderRadius: 75
-    }
+    },
+    invoiceButton: {
+        borderWidth:0.5,
+        padding: 7,
+        borderColor: '#835741',
+        borderRadius:10,
+        marginBottom: 10,
+        marginTop:7,
+        width: '75%',
+        alignSelf: 'center'
+    },
+    invoiceButtonText:{
+        fontFamily: 'serif',
+        color: '#835741',
+        textAlign:'center',
+        fontSize: 15
+    },
+    buttonRecord: {
+        backgroundColor: '#fff',
+        borderRadius: 5,
+        padding: 10,
+        alignItems: 'center',
+        // marginBottom: 10,
+        width: '60%',
+        alignSelf: 'center',
+        borderColor: '#835741',
+        borderWidth: 0.5,
+    
+    },
 })

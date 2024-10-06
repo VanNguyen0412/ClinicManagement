@@ -30,19 +30,19 @@ const CreatePatient = () => {
     const user = useReducer(MyUserContext)
     const [patient, setPatient] = useState([]);
 
-    const getPatient = async () => {
-        try{
-            let url = `${endpoints['current-patient']}?user=${user.id}`;
-            const res = await APIs.get(url)
-            setPatient(res.data)
-        }catch(ex){
-            Alert.alert("TVítalCare Clinic", "Bị lỗi loading.")
-        }
-    }
+    // const getPatient = async () => {
+    //     try{
+    //         let url = `${endpoints['current-patient']}?user=${user.id}`;
+    //         const res = await APIs.get(url)
+    //         setPatient(res.data)
+    //     }catch(ex){
+    //         Alert.alert("TVítalCare Clinic", "Bị lỗi loading.")
+    //     }
+    // }
 
-    useEffect(()=>{
-        getPatient();
-    },[user])
+    // useEffect(()=>{
+    //     getPatient();
+    // },[user])
 
     const handleDone = async () => {
         if (!first_name || !last_name || !birthdate || !address ||!gender || !phone){

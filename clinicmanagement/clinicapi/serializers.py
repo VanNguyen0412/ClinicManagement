@@ -14,11 +14,13 @@ class NewsSerializer(serializers.ModelSerializer):
         req = super().to_representation(instance)
         if instance.image:
             req['image'] = instance.image.url
+            req['image2'] = instance.image2.url
+            req['image3'] = instance.image3.url
         return req
 
     class Meta:
         model = News
-        fields = ['id', 'title', 'created_date', 'image', 'content']
+        fields = ['id', 'title', 'created_date', 'image', 'content', 'image2', 'image3', 'content2']
 
 
 class UserSerializer(serializers.ModelSerializer):

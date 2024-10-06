@@ -25,6 +25,7 @@ export default StyleSheet.create({
         marginHorizontal: 10,
         borderRadius: 5,
         borderWidth: 1,
+        
     },
     read: {
         backgroundColor: '#f0f0f0',
@@ -42,16 +43,23 @@ export default StyleSheet.create({
     typeText: {
         fontWeight: 'bold',
         fontSize: 16,
+        fontFamily: 'serif',
+
     },
     dateText: {
         fontSize: 12,
         color: '#999',
+        fontFamily: 'serif',
+
     },
     contentText: {
         fontSize: 14,
+        fontFamily: 'serif',
+
     },
     texContent: {
         marginRight: 50,
+        fontFamily: 'serif',
 
     },
     tableHeader: {
@@ -161,5 +169,40 @@ export default StyleSheet.create({
         padding: 7, 
         borderRadius: 10, 
         marginTop: 8
+    },
+    invoiceContainer: { 
+        flexDirection: 'row',  
+        borderColor: '#835741', 
+        borderWidth: 0.5, 
+        padding: 7, 
+        borderRadius: 10,
+        marginBottom: 10
+        
+    },
+    momo: {
+        width: '100%',
+        height: 70,
+        borderWidth: 0.5,
+        borderColor: '#835741',
+        borderRadius: 10,
+        marginBottom: 10
+    },
+    payment: {
+        backgroundColor: '#fff',
+        borderRadius: 5,
+        padding: 10,
+        alignItems: 'center',
+        // marginBottom: 10,
+        width: '60%',
+        alignSelf: 'center',
+        borderColor: '#835741',
+        borderWidth: 0.5,
+    },
+    paymentText: {
+        color: '#835741',
+        textAlign: 'center',
+        fontFamily: 'serif',
+        fontSize: 17,
+        fontWeight: '700'
     }
 })

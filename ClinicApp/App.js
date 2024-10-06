@@ -30,6 +30,8 @@ import ProfilePatient from "./compoments/Patient/ProfilePatient";
 import Prescription from "./compoments/Prescription/Presciptions";
 import HealthMonitoring from "./compoments/HealthMonitoring/HealthMonitoring";
 import Invoice from "./compoments/Invoice/Invoice";
+import InvoiceDetail from "./compoments/Invoice/InvoiceDetail";
+import NewDetail from "./compoments/Home/NewDetail";
 
 
 const Stack = createStackNavigator();
@@ -52,6 +54,9 @@ const MyStackMainPatient = () => {
       <Stack.Screen name="ProfilePatient" component={ProfilePatient} />
       <Stack.Screen name="HealthMonitoring" component={HealthMonitoring} />
       <Stack.Screen name="Invoice" component={Invoice} />
+      <Stack.Screen name="InvoiceDetail" component={InvoiceDetail} />
+      <Stack.Screen name="NewDetail" component={NewDetail} />
+
 
     </Stack.Navigator>
   );
@@ -74,6 +79,7 @@ const MyStackMainDoctor = () => {
       <Stack.Screen name="RatingDetail" component={RatingDetail} />
       <Stack.Screen name="MedicineList" component={MedicineList} />
       <Stack.Screen name="Prescription" component={Prescription} />
+      <Stack.Screen name="NewDetail" component={NewDetail} />
 
     </Stack.Navigator>
   );
@@ -86,6 +92,8 @@ const MyStackLogin = () => {
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Register" component={Register} />
       <Stack.Screen name="ConfirmUser" component={ComfirmUser} />
+      <Stack.Screen name="CreatePatient" component={CreatePatient} />
+
     </Stack.Navigator>
   );
 };

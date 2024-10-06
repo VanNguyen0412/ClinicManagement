@@ -210,4 +210,16 @@ export default StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'serif'
   },
+  buttonRecord: {
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    padding: 10,
+    alignItems: 'center',
+    // marginBottom: 10,
+    width: '60%',
+    alignSelf: 'center',
+    borderColor: '#835741',
+    borderWidth: 0.5,
+
+},
 });

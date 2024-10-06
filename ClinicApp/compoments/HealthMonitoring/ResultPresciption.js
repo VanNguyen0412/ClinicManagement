@@ -57,7 +57,7 @@ const ResultPrescription = ({ onBack }) => {
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>
-            <ScrollView style={styles.container}>
+            <View style={styles.container}>
                 <SegmentedButtons style={styles.tabMenu}
                     value={value}
                     onValueChange={setValue}
@@ -74,7 +74,7 @@ const ResultPrescription = ({ onBack }) => {
                     ]}
                 />
                 {value === 'done' && (
-                    <View style={{marginBottom: 20}}>       
+                    <ScrollView style={{marginBottom: 20}}>       
                     {result.map((result) => (
                         <View style={{flex: 1, padding: 8, marginBottom: 5}}>
                             <View style={{ flexDirection: 'row', borderWidth: 0.5, padding:5, borderRadius: 6, borderColor: '#835741' }}>
@@ -91,7 +91,7 @@ const ResultPrescription = ({ onBack }) => {
                             </View>
                         </View>
                     ))}
-                    </View>
+                    </ScrollView>
 
                 )}
                 {value === 'notyet' && (
@@ -100,7 +100,7 @@ const ResultPrescription = ({ onBack }) => {
                     </View>
 
                 )}
-            </ScrollView>
+            </View>
             {loading && (
                 <Modal
                     transparent={true}

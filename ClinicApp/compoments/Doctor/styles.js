@@ -400,7 +400,7 @@ export default StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.5)', // Màu mờ
     },
     addMedicineContainer: {
-        marginTop: 20,
+        // marginTop: 20,
         marginBottom: 20,
     },
 

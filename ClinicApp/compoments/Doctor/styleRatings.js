@@ -73,7 +73,7 @@ export default StyleSheet.create({
     fontFamily: 'serif'
   },
   contentRole: {
-    fontSize: 14,
+    fontSize: 11,
     color: '#333',
     fontFamily: 'serif',
     textAlign: 'center'
@@ -84,7 +84,7 @@ export default StyleSheet.create({
     fontFamily: 'serif'
   },
   container: {
-    padding: 20,
+    padding: 10,
     backgroundColor: '#fff',
     borderRadius: 5,
     borderWidth: 0.5,
@@ -102,7 +102,16 @@ export default StyleSheet.create({
   },
   
   input: {
-    height: 100,
+    height: 80,
+    borderColor: '#8B4513',
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+    fontFamily: 'serif'
+  },
+  inputUpdate: {
+    // height: 100,
     borderColor: '#8B4513',
     borderWidth: 1,
     borderRadius: 5,
@@ -124,7 +133,15 @@ export default StyleSheet.create({
     color: '#835741',
     fontSize: 15,
     fontWeight: 'bold',
-    fontFamily: 'serif'
+    fontFamily: 'serif',
+  },
+
+  buttonCancel: {
+    color: '#835741',
+    fontSize: 13,
+    fontWeight: 'bold',
+    fontFamily: 'serif',
+    textAlign: 'center'
   },
     
 });

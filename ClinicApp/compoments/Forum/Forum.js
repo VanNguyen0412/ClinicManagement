@@ -21,12 +21,26 @@ const Forum = () => {
     const [nav, setNav] = useState(false)
     const [detail, setDetail] = useState(null)
     const user = useContext(MyUserContext);
-    const [visibleMenus, setVisibleMenus] = useState({});  
+    const [visibleMenus, setVisibleMenus] = useState({});
     const [update, setUpdate] = useState(false);
+    const [editForumId, setEditForumId] = useState(null); // ID của diễn đàn đang chỉnh sửa
+    const [patient, setPatient] = useState({});
 
+    const getPatient = async () => {
+        try {
+            if (user && user.id) {
+                let url = `${endpoints['current-patient']}?user=${user.id}`;
+                const res = await APIs.get(url);
+                setPatient(res.data);
+            }
+            // console.info(patient)
+        } catch (ex) {
+            Alert.alert("VítalCare Clinic", "Bạn nên tạo thông tin cá nhân.")
+        }
+    }
     const handleUpdate = async (forumId) => {
         setLoading(true)
-        try{
+        try {
             const token = await AsyncStorage.getItem("token");
             if (!token) {
                 Alert.alert("Error", "No access token found.");
@@ -41,14 +55,16 @@ const Forum = () => {
                 }
             });
 
-            if (res.status === 200){
+            if (res.status === 200) {
                 Alert.alert("VítalCare Clinic", "Đã chỉnh sửa thành công")
-            }else if (res.status === 400){
+                setEditForumId(null)
+                loadForumData
+            } else if (res.status === 400) {
                 Alert.alert("VítalCare Clinic", "Bạn không có quyền thực hiện điều này.")
             }
-        }catch(error){
+        } catch (error) {
             console.error(error)
-        }finally{
+        } finally {
             setLoading(false)
         }
     }
@@ -62,16 +78,16 @@ const Forum = () => {
                 return;
             }
             let res = await authApi(token).delete(endpoints['forum-delete'](forumId))
-            if (res.status === 204) {
+            if (res.status === 200) {
                 Alert.alert("VítalCare Clinic", "Đã xóa diễn đàn thành công.");
                 loadForumData();
-            } else {
-                console.error("Error creating forum:", response.data);
-                Alert.alert("Error", "Xóa diễn đàn bị lỗi!!!");
+                // handleDismissMenu(forumId)
+            } else if(res.status === 400){
+                Alert.alert("Error", "Xóa diễn đàn bị lỗi. Bạn không có quyền xóa diễn đàn này.");
             }
-        }catch(error){
+        } catch (error) {
             console.error(error)
-        }finally{
+        } finally {
             setLoading(false)
         }
     }
@@ -79,14 +95,14 @@ const Forum = () => {
     const handleMenuToggle = (index) => {
         setVisibleMenus((prev) => ({
             ...prev,
-            [index]: !prev[index],  
+            [index]: !prev[index],
         }));
     };
-    
+
     const handleDismissMenu = (index) => {
         setVisibleMenus((prev) => ({
             ...prev,
-            [index]: false,  
+            [index]: false,
         }));
     };
 
@@ -108,6 +124,7 @@ const Forum = () => {
         try {
             const response = await APIs.get(endpoints["forum"]);
             setForums(response.data);
+            // console.info(forums)
         } catch (error) {
             console.error("Error loading forum data:", error);
         } finally {
@@ -135,7 +152,7 @@ const Forum = () => {
     };
 
     const handleCreate = async () => {
-        if (!title || !content || !image ){
+        if (!title || !content || !image) {
             Alert.alert("VítalCare Clinic", "Thiếu thông tin. Hãy điền đủ thông tin yêu cầu.")
         }
         setLoading(true)
@@ -169,13 +186,13 @@ const Forum = () => {
                 Alert.alert("VítalCare Clinic", "Đã tạo diễn đàn thành công")
                 setShow(!show)
                 loadForumData()
-            }else if (res.status === 400){
+            } else if (res.status === 400) {
                 Alert.alert("VítalCare Clinic", "Thiếu thông tin. Hãy điền đủ thông tin yêu cầu.")
             }
 
         } catch (error) {
-            if (error.response) {
-                console.error("Network error", error);
+            if (error.response || error.response.status === 400) {
+                Alert.alert("VítalCare Clinic", "Hình ảnh dung lượng quá lớn!");
             }
         } finally {
             setLoading(false)
@@ -208,7 +225,25 @@ const Forum = () => {
 
     useEffect(() => {
         loadForumData();
+        getPatient()
     }, [user]);
+
+    const handleEdit = (forum) => {
+        if(forum.patient.id === patient.id){
+            setEditForumId(forum.id); 
+            setTitle(forum.title); 
+            setContent(forum.content);
+        }else{
+            Alert.alert("VítalCare Clinic", "Bạn không quyền chỉnh sửa diễn đàn này.")
+        }
+        
+    };
+
+    const handleCancelEdit = () => {
+        setEditForumId(null); 
+        setTitle(''); 
+        setContent(''); 
+    };
 
 
     if (nav && detail) {
@@ -226,6 +261,7 @@ const Forum = () => {
                 </TouchableOpacity>
             </View>
             <ScrollView style={styles.container}>
+
                 {!show && (
                     <TouchableOpacity style={styles.button} onPress={handleShow}>
                         <Text style={styles.buttonText1}>Thêm diễn đàn mới</Text>
@@ -234,6 +270,11 @@ const Forum = () => {
 
                 {show && (
                     <View>
+                        {show && (
+                            <TouchableOpacity onPress={handleShow}>
+                                <FontAwesome name="minus-square-o" size={15} />
+                            </TouchableOpacity>
+                        )}
                         <Text style={styles.label}>Tiêu đề <Text style={{ color: 'red' }}>*</Text>:</Text>
                         <TextInput
                             style={styles.input}
@@ -252,40 +293,73 @@ const Forum = () => {
                             placeholder="Nhập nội dung"
                         />
                         <TouchableOpacity onPress={picker}>
-                            <Text style={styles.textAvatar}>{image ? 'Chọn lại hình ảnh': 'Chọn hình ảnh'}</Text>
+                            <Text style={styles.textAvatar}>{image ? 'Chọn lại hình ảnh' : 'Chọn hình ảnh'}</Text>
                         </TouchableOpacity>
-                        {image && <Image source={{uri: image.uri}}  style={styles.image}/>}
+                        {image && <Image source={{ uri: image.uri }} style={styles.image} />}
                         <TouchableOpacity style={styles.buttonRecord} onPress={handleCreate}>
                             <Text style={styles.buttonText}>Tạo mới</Text>
                         </TouchableOpacity>
                     </View>
                 )}
                 {forums.map((forum, index) => (
-                    <View style={{flexDirection: 'row', marginBottom: 10}}>
-                        <TouchableOpacity key={index} style={styles.forumItem} onPress={() => handleDetail(forum.id)}>
-                            <View style={styles.avatarContainer}>
-                                <Image source={{ uri: forum.image }} style={styles.avatar} />
+                    <View>
+                        {editForumId === forum.id ? (
+                            // Nếu ID trùng với ID đang chỉnh sửa, hiển thị TextInput để người dùng sửa
+                            <View>
+                                
+                                <TextInput
+                                    style={styles.input}
+                                    value={title}
+                                    onChangeText={setTitle}
+                                    placeholder="Sửa tiêu đề"
+                                />
+                                <TextInput
+                                    style={styles.input}
+                                    value={content}
+                                    onChangeText={setContent}
+                                    multiline
+                                    numberOfLines={4}
+                                    placeholder="Sửa nội dung"
+                                />
+                                <TouchableOpacity onPress={() => handleUpdate(forum.id)}>
+                                    <Text style={{ fontFamily: 'serif', fontSize: 14, marginBottom: 5, color: '#835741' }}>
+                                        Lưu chỉnh sửa</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={handleCancelEdit}>
+                                    <Text style={{ fontFamily: 'serif', fontSize: 14, marginBottom: 5, color: '#835741' }}>
+                                        Hủy bỏ</Text>
+                                </TouchableOpacity>
                             </View>
-                            <View style={styles.contentContainer}>
-                                <Text style={styles.patientName}>{forum.patient.full_name}</Text>
-                                <Text style={{ fontFamily: 'serif', fontSize: 13, marginBottom: 5, }} >{moment(forum.created_date).format('DD MMMM YYYY HH:mm:ss')}</Text>
-                                <Text style={styles.titleText}>Tiêu đề: {forum.title}</Text>
-                                <Text style={{ fontFamily: 'serif', }} >{forum.content.substring(0, 50)}...</Text>
+                        ) : (
+                            <View key={index} style={{ flexDirection: 'row', marginBottom: 10 }}>
+                                <TouchableOpacity style={styles.forumItem} onPress={() => handleDetail(forum.id)}>
+                                    <View style={styles.avatarContainer}>
+                                        <Image source={{ uri: forum.image }} style={styles.avatar} />
+                                    </View>
+                                    <View style={styles.contentContainer}>
+                                        <Text style={styles.patientName}>{forum.patient.full_name}</Text>
+                                        <Text style={{ fontFamily: 'serif', fontSize: 13, marginBottom: 5, }}>{moment(forum.created_date).format('DD MMMM YYYY HH:mm:ss')}</Text>
+                                        <Text style={styles.titleText}>Tiêu đề: {forum.title}</Text>
+                                        <Text style={{ fontFamily: 'serif' }}>{forum.content.substring(0, 50)}...</Text>
+                                    </View>
+                                </TouchableOpacity>
+                                {/* // Nếu không chỉnh sửa, hiển thị Menu như trước */}
+                                <View style={{ justifyContent: 'center', alignItems: 'center', flex: 0.5 }}>
+                                    <Menu
+                                        visible={visibleMenus[index]}
+                                        onDismiss={() => handleDismissMenu(index)}
+                                        anchor={
+                                            <TouchableOpacity onPress={() => handleMenuToggle(index)}>
+                                                <FontAwesome name='ellipsis-v' size={20} color='#8B4513' />
+                                            </TouchableOpacity>
+                                        }>
+                                        <Menu.Item onPress={() => handleEdit(forum)} title="Chỉnh sửa" leadingIcon="update" />
+                                        <Menu.Item onPress={() => handleDelete(forum.id)} title="Xóa" leadingIcon="delete" />
+                                    </Menu>
+                                </View>
                             </View>
 
-                        </TouchableOpacity>
-                        <View style={{ justifyContent: 'center', alignItems: 'center', flex: 0.5 }}>
-                            <Menu
-                                visible={visibleMenus[index]}
-                                onDismiss={() => handleDismissMenu(index)}
-                                anchor={
-                                    <TouchableOpacity onPress={() => handleMenuToggle(index)}>
-                                        <FontAwesome name='ellipsis-v' size={20} color='#8B4513' />
-                                    </TouchableOpacity>}>
-                                <Menu.Item onPress={() => { }} title="Chỉnh sửa" leadingIcon="update" />
-                                <Menu.Item onPress={() => handleDelete(index)} title="Xóa" leadingIcon="delete" />
-                            </Menu>
-                        </View>
+                        )}
                     </View>
                 ))}
             </ScrollView>

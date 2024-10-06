@@ -4,7 +4,7 @@ import MyStyles from '../../styles/MyStyles';
 import { FontAwesome } from "@expo/vector-icons";
 import { MyUserContext } from '../../configs/Context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authApi, endpoints } from '../../configs/APIs';
+import APIs, { authApi, endpoints } from '../../configs/APIs';
 import { Modal } from 'react-native';
 import { Image } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
@@ -58,6 +58,49 @@ const Notification = () => {
         }
     }
 
+    const handleDelete = async (notification) => {
+        setLoading(true)
+        try {
+            if (user.id !== notification.user){
+                Alert.alert("VítalCare Clinic", "Bạn không có quyền xóa thông báo này")
+            }else{
+                let res = await APIs.delete(endpoints['delete-noti'](notification.id))
+
+                if(res.status === 204){
+                    Alert.alert("VítalCare Clinic", "Đã xóa thông báo thành công.")
+                    loadNotifications();
+                }else{
+                    Alert.alert("VítalCare Clinic", "Đã bị lỗi khi xóa.")
+                }
+            }
+        } catch (error) {
+            console.error(ex)
+            Alert.alert("VítalCare Clinic", "Xóa bị lỗi");
+        }finally{
+            setLoading(false)
+        }
+    }
+
+    const handleRead = async (notificationId) => {
+        setLoading(true)
+        try {
+            const token = await AsyncStorage.getItem("token");
+            if (!token) {
+                Alert.alert("Error", "No access token found.");
+                return;
+            }
+            let res = await authApi(token).post(endpoints['read-noti'](notificationId));
+            if (res.status === 200){
+                nav.navigate('Appointment')
+            }
+        } catch (ex) {
+            console.error(ex)
+            Alert.alert("VítalCare Clinic", "Lỗi");
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const onRefresh = async () => {
         setRefreshing(true); // Bắt đầu refresh
         await loadNotifications();
@@ -101,43 +144,56 @@ const Notification = () => {
             >
                 {notifications.map((item) => (
                     user.role === 'patient' ?
-                        <TouchableOpacity onPress={() => handleDetail(item)}>
-                            <View key={item.id} style={[style.notificationContainer, item.is_read ? style.read : style.unread]}>
+                        <TouchableOpacity key={item.id} onPress={() => handleDetail(item)}>
+                            <View style={[style.notificationContainer, item.is_read ? style.read : style.unread]}>
                                 <View style={style.header}>
                                     <Text style={style.typeText}>
                                         {item.type === 'medicine' ?
                                             '💊' : '📝'} {getType(item.type)}
                                     </Text>
                                     <Text style={style.dateText}>{new Date(item.created_date).toLocaleDateString()}</Text>
+                                    <TouchableOpacity onPress={() => handleDelete(item)}>
+                                        <FontAwesome name='trash-o' size={15} color='#835741' />
+                                    </TouchableOpacity>
+
                                 </View>
                                 <Text style={style.contentText}>{item.content}</Text>
                             </View>
+
                         </TouchableOpacity>
                         : user.role === 'doctor' ?
-                            <TouchableOpacity onPress={() => nav.navigate("Appointment")}>
-                                <View key={item.id} style={[style.notificationContainer, item.is_read ? style.read : style.unread]}>
-                                    <View style={style.header}>
-                                        <Text style={style.typeText}>
-                                            {item.type === 'medicine' ?
-                                                '💊' : '📝'} {getType(item.type)}
-                                        </Text>
-                                        <Text style={style.dateText}>{new Date(item.created_date).toLocaleDateString()}</Text>
-                                    </View>
-                                    <Text style={style.contentText}>{item.content}</Text>
+                            <TouchableOpacity key={item.id} onPress={() => handleRead(item.id)}>
+                                <View  style={[style.notificationContainer, item.is_read ? style.read : style.unread]}>
+                                <View style={style.header}>
+                                    <Text style={style.typeText}>
+                                        {item.type === 'medicine' ?
+                                            '💊' : '📝'} {getType(item.type)}
+                                    </Text>
+                                    <Text style={style.dateText}>{new Date(item.created_date).toLocaleDateString()}</Text>
+                                    <TouchableOpacity onPress={() => handleDelete(item)}>
+                                        <FontAwesome name='trash-o' size={15} color='#835741' />
+                                    </TouchableOpacity>
+
                                 </View>
+                                <Text style={style.contentText}>{item.content}</Text>
+                            </View>
                             </TouchableOpacity>
                             :
-                            <TouchableOpacity onPress={() => handleDetail(item)}>
-                                <View key={item.id} style={[style.notificationContainer, item.is_read ? style.read : style.unread]}>
-                                    <View style={style.header}>
-                                        <Text style={style.typeText}>
-                                            {item.type === 'medicine' ?
-                                                '💊' : '📝'} {getType(item.type)}
-                                        </Text>
-                                        <Text style={style.dateText}>{new Date(item.created_date).toLocaleDateString()}</Text>
-                                    </View>
-                                    <Text style={style.contentText}>{item.content}</Text>
+                            <TouchableOpacity key={item.id}  onPress={() => handleDetail(item)}>
+                                <View style={[style.notificationContainer, item.is_read ? style.read : style.unread]}>
+                                <View style={style.header}>
+                                    <Text style={style.typeText}>
+                                        {item.type === 'medicine' ?
+                                            '💊' : '📝'} {getType(item.type)}
+                                    </Text>
+                                    <Text style={style.dateText}>{new Date(item.created_date).toLocaleDateString()}</Text>
+                                    <TouchableOpacity onPress={() => handleDelete(item)}>
+                                        <FontAwesome name='trash-o' size={15} color='#835741' />
+                                    </TouchableOpacity>
+
                                 </View>
+                                <Text style={style.contentText}>{item.content}</Text>
+                            </View>
                             </TouchableOpacity>
                 ))}
             </ScrollView>

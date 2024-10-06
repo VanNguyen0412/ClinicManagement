@@ -11,6 +11,7 @@ import { Modal } from 'react-native';
 import { ActivityIndicator, Avatar } from 'react-native-paper';
 import moment from 'moment';
 import { MyUserContext } from '../../configs/Context';
+import RatingDetail from './RatingDetail';
 
 const Doctor = ({ doctor, onBack }) => {
     const [showMore, setShowMore] = useState(false);
@@ -18,7 +19,8 @@ const Doctor = ({ doctor, onBack }) => {
     const [loading, setLoading] = useState(false);
     const [ratings, setRating] = useState({});
     const user = useContext(MyUserContext)
-
+    const [showRating, setShowRating] = useState(false);
+    const [doctorId, setDoctorId] = useState(0);
 
     const toggleShowMore = () => {
         setShowMore(!showMore);
@@ -66,6 +68,22 @@ const Doctor = ({ doctor, onBack }) => {
             </View>
         );
     };
+
+    
+
+    const handleShowRating = (id) => {
+        setDoctorId(id)
+        setShowRating(true)
+    }
+
+    const handleBackRating = () => {
+        setShowRating(false)
+    }
+
+    if (showRating){
+        return <RatingDetail doctorId={doctorId} onBack={handleBackRating} />
+    }
+
 
     return (
         <>
@@ -116,7 +134,7 @@ const Doctor = ({ doctor, onBack }) => {
                     <Text style={styles.sectionTitle}>Chuyên khoa</Text>
                     <View style={[styles.margin]}>
                         <FontAwesome name="stethoscope" size={22} color='#8B4513' />
-                        <Text >{doctor.expertise}</Text>
+                        <Text style={{fontFamily: 'serif'}} >{doctor.expertise}</Text>
                     </View>
 
                     <Text style={styles.sectionTitle}>Giới thiệu</Text>
@@ -137,7 +155,7 @@ const Doctor = ({ doctor, onBack }) => {
                     <View style={styles.categoryContainer}>
                         <View style={styles.cardHeader}>
                             <Text style={styles.sectionTitle}>Đánh giá</Text>
-                            <TouchableOpacity onPress={() => nav.navigate("RatingDetail", { 'doctorId': doctor.id })}>
+                            <TouchableOpacity onPress={() => handleShowRating(doctor.id)}>
                                 <Text style={styles.seeAll}>Xem tất cả</Text>
                             </TouchableOpacity>
                         </View>

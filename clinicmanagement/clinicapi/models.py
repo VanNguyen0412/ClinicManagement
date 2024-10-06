@@ -199,12 +199,16 @@ class Notification(BaseModel):
     type = models.CharField(max_length=255, choices=Type.choices, default=Type.APPOINTMENT)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     is_read = models.BooleanField(default=False)
+    prescription = models.ForeignKey(Prescription, blank=True, null=True, on_delete=models.CASCADE)
 
 
 class News(BaseModel):
     title = models.TextField()
     content = RichTextField()
     image = CloudinaryField()
+    image2 = CloudinaryField(null=True)
+    image3 = CloudinaryField(null=True)
+    content2 = models.TextField(default="none")
 
     def __str__(self):
         return self.title
@@ -217,6 +221,7 @@ class Invoice(models.Model):
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     consultation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=100000)  # Tiền khám cố định 100k
     payment_proof = CloudinaryField(null=True, blank=True)  # Lưu hình minh chứng thanh toán
+    order_id = models.CharField(max_length=50, null=True, blank=True)  # Thêm trường order_id để lưu UUID
 
     class PAYMENT_CHOICES(models.TextChoices):
         MOMO = 'momo'

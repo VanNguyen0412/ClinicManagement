@@ -78,7 +78,7 @@ const Home = ({ route }) => {
             }
             // console.info(patient)
         } catch (ex) {
-            Alert.alert("Trang chủ", "Bị lỗi loading.")
+            Alert.alert("VítalCare Clinic", "Bạn nên tạo thông tin cá nhân.")
         }
     }
 
@@ -99,7 +99,7 @@ const Home = ({ route }) => {
 
             }
         } catch (ex) {
-            Alert.alert("VítalCare Clinic", "Bị lỗi loading.")
+            Alert.alert("VítalCare Clinic", "Bạn nên tạo thông tin cá nhân.")
         } finally {
             setLoading(false)
         }
@@ -114,10 +114,14 @@ const Home = ({ route }) => {
     const loadNew = async () => {
         try {
             let res = await APIs.get(endpoints['new'])
-            const newBanners = res.data.map(image => ({ url: image.image }));
+            const newBanners = res.data.map(image => ({ 
+                id: image.id, // Assuming you have an 'id' field
+                url: image.image 
+            }));
             setBanners(newBanners);
+            // console.info(res.data)
         } catch (ex) {
-            Alert.alert("Trang chủ", "Bị lỗi.")
+            Alert.alert("VítalCare Clinic", "Bị lỗi.")
         }
     }
 
@@ -129,7 +133,7 @@ const Home = ({ route }) => {
             setMedicine(res.data.results)
             // console.info(medicine)
         } catch (ex) {
-            Alert.alert("Trang chủ", "Bị lỗi khi loading thuốc.")
+            Alert.alert("VítalCare Clinic", "Bị lỗi khi loading thuốc.")
         }
     }
 
@@ -159,7 +163,7 @@ const Home = ({ route }) => {
     useEffect(() => {
         const interval = setInterval(() => {
             goToNextPage();
-        }, 5000);
+        }, 6000);
 
         return () => clearInterval(interval); // Clear interval on component unmount
     }, []);
@@ -183,6 +187,8 @@ const Home = ({ route }) => {
         return <Invoice patientId={patient.id} onBack={navBackInvoice} />;
     }
 
+    
+
     return (
         <ScrollView style={styles.container}
         refreshControl={ // Thêm RefreshControl để làm mới khi kéo xuống
@@ -196,7 +202,7 @@ const Home = ({ route }) => {
                     <Text style={styles.username}>{patient.first_name ? `${patient.first_name} ${patient.last_name}` : user.username}</Text>
                     <Text style={styles.email}>{user.email}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => nav.navigate('Profile')}>
+                <TouchableOpacity >
                     <Image
                         source={{ uri: user.avatar }} // Đường dẫn đến ảnh avatar
                         style={styles.avatar}
@@ -205,7 +211,7 @@ const Home = ({ route }) => {
 
             </View>
             {health_monitoring.map((item) => (
-                <View style={styles.infoContainer}>
+                <View style={styles.infoContainer} key={health_monitoring.id}>
                     <View style={styles.infoBox}>
                         <Text style={{fontFamily: 'serif'}}>Chiều cao</Text>
                         <Text style={styles.input}>{item.height}</Text>
@@ -278,7 +284,7 @@ const Home = ({ route }) => {
                     scrollEventThrottle={16}
                 >
                     {banners1.map((banner, index) => (
-                        <TouchableOpacity key={index} style={{ width }}>
+                        <TouchableOpacity key={index} style={{ width }} onPress={() => nav.navigate("NewDetail", {'id': banner.id})}>
                             <Image source={{ uri: banner.url }} style={styles.imageBanner} />
                         </TouchableOpacity>
                     ))}
@@ -310,8 +316,9 @@ const Home = ({ route }) => {
 
             </View>
             <View style={styles.categoryContainer}>
-                {medicine.map(item => (
+                {medicine.map((item, index) => (
                     <TouchableOpacity
+                        key={index}
                         style={styles.medicineBox}
                         onPress={() => {
                             setSelectedMedicine(item);

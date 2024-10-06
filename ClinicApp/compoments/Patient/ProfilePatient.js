@@ -168,7 +168,7 @@ const ProfilePatient = ({ onBack }) => {
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>
-            <ScrollView style={styles.container}>
+            <View style={styles.container}>
                 <SegmentedButtons style={styles.tabMenu}
                     value={value}
                     onValueChange={setValue}
@@ -189,7 +189,7 @@ const ProfilePatient = ({ onBack }) => {
                 />
 
                 {value === 'health' && (
-                    <View style={styles.infoCard}>
+                    <ScrollView style={styles.infoCard}>
                         <Text style={styles.infoHeader}>Thông tin cá nhân</Text>
                         <View style={styles.infoRow}>
                             <Text style={styles.label1}>Họ và tên:</Text>
@@ -236,10 +236,10 @@ const ProfilePatient = ({ onBack }) => {
                             </View>
                         ))}
 
-                    </View>
+                    </ScrollView>
                 )}
                 {value === 'doctor' && (
-                    <View style={styles.infoCard}>
+                    <ScrollView style={styles.infoCard}>
                         <Text style={styles.infoHeader1}>Danh sách bác sĩ từng khám bệnh</Text>
 
                         {health_monitoring.map((item) => (
@@ -258,13 +258,13 @@ const ProfilePatient = ({ onBack }) => {
                             ))
 
                         ))}
-                        <TouchableOpacity style={styles.button} onPress={handleUpdateDoctor}>
+                        <TouchableOpacity style={styles.button1} onPress={handleUpdateDoctor}>
                             <Text style={styles.buttonText1}>Cập nhập</Text>
                         </TouchableOpacity>
-                    </View>
+                    </ScrollView>
                 )}
                 {value === 'update' && (
-                    <View style={styles.infoCard}>
+                    <ScrollView style={styles.infoCard}>
                         <Text style={styles.infoHeader1}>Cập nhập</Text>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-evenly' }}>
                             <View style={{ flex: 1 }}>
@@ -328,13 +328,13 @@ const ProfilePatient = ({ onBack }) => {
                             Huyết áp tâm trương hay còn gọi là huyết áp tối thiểu. Huyết áp tâm trương dao động trong khoảng từ <Text style={{ fontWeight: 'bold' }}>50 đến 90 mmHg</Text>.
                             Chỉ số huyết áp nhỏ hơn <Text style={{ fontWeight: 'bold' }}>120/80 mmHg</Text> là huyết áp tối ưu.
                         </Text>
-                        <Text style={styles.bonus}>
+                        <Text style={[styles.bonus, styles.margin]}>
                             Đối với người từ <Text style={{ fontWeight: 'bold' }}>18</Text> tuổi trở lên,
                             nhịp tim bình thường trong lúc nghỉ ngơi dao động trong khoảng từ <Text style={{ fontWeight: 'bold' }}>60 đến 100</Text> nhịp mỗi phút.
                         </Text>
-                    </View>
+                    </ScrollView>
                 )}
-            </ScrollView>
+            </View>
             {loading && (
                 <Modal
                     transparent={true}

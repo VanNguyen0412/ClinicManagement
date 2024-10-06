@@ -77,7 +77,7 @@ const HealthMonitoring = () => {
             setPrediction(response.data.prediction);
         } catch (error) {
             console.error(error);
-        }finally{
+        } finally {
             setLoading(false)
         }
     };
@@ -101,27 +101,27 @@ const HealthMonitoring = () => {
                     {days.map((day, index) => (
                         <View key={index} >
                             <Text style={style.day}>{`Ngày ${index + 1} - ${day}`}</Text>
-                            <View style={{flexDirection: 'row'}}>
-                            <View style={{flex: 1}}>
-                                <Text style={{ marginBottom: 5, fontFamily: 'serif' }}>Nhập chỉ số tâm thu:</Text>
-                                <TextInput
-                                    style={style.input}
-                                    value={bloodPressure[day]?.systolic || ""}
-                                    onChangeText={(text) => handleInputChange(day, "systolic", text)}
-                                    keyboardType="numeric"
-                                    placeholder="Nhập chỉ số ..."
-                                />
-                            </View>
-                            <View style={{flex: 1}}>
-                                <Text style={{ marginBottom: 5, fontFamily: 'serif' }}>Nhập chỉ số tâm trương:</Text>
-                                <TextInput
-                                    style={style.input}
-                                    value={bloodPressure[day]?.diastolic || ""}
-                                    onChangeText={(text) => handleInputChange(day, "diastolic", text)}
-                                    keyboardType="numeric"
-                                    placeholder="Nhập chỉ số ..."
-                                />
-                            </View>
+                            <View style={{ flexDirection: 'row' }}>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={{ marginBottom: 5, fontFamily: 'serif' }}>Nhập chỉ số tâm thu:</Text>
+                                    <TextInput
+                                        style={style.input}
+                                        value={bloodPressure[day]?.systolic || ""}
+                                        onChangeText={(text) => handleInputChange(day, "systolic", text)}
+                                        keyboardType="numeric"
+                                        placeholder="Nhập chỉ số ..."
+                                    />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={{ marginBottom: 5, fontFamily: 'serif' }}>Nhập chỉ số tâm trương:</Text>
+                                    <TextInput
+                                        style={style.input}
+                                        value={bloodPressure[day]?.diastolic || ""}
+                                        onChangeText={(text) => handleInputChange(day, "diastolic", text)}
+                                        keyboardType="numeric"
+                                        placeholder="Nhập chỉ số ..."
+                                    />
+                                </View>
                             </View>
                         </View>
                     ))}
@@ -135,6 +135,7 @@ const HealthMonitoring = () => {
                     {prediction !== null && (
                         <Text style={{ marginTop: 15, fontFamily: 'serif' }}>Prediction: {prediction === 1 ? 'Có nguy cơ huyết áp cao' : 'Huyết áp bình thường'}</Text>
                     )}
+
                 </ScrollView>
             )}
 

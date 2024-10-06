@@ -25,6 +25,10 @@ from clinicapi.views import RemoveAnswer
 remove_answer = RemoveAnswer.as_view({
     'delete': 'destroy',
 })
+update_answer = RemoveAnswer.as_view({
+    'patch': 'partial_update',
+})
+
 schema_view = get_schema_view(
     openapi.Info(
         title="Clinic Management API",
@@ -52,5 +56,9 @@ urlpatterns = [
             name='schema-redoc'),
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     path('forum/<int:question>/answer/<int:answer>/', remove_answer,
-         name='remove_answe_from_question'),
+         name='remove_answer_from_question'),
+    path('forum/<int:question>/answer/<int:answer>/update/', update_answer,
+         name='update_answer_from_question'),
+    # path('momo/payment/<int:invoice_id>/', momo_payment_request, name='momo_payment_request'),
+
 ]

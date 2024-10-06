@@ -70,10 +70,20 @@ export default StyleSheet.create({
         fontFamily: 'serif'
 
     },
+    button1: {
+        backgroundColor: '#8B4513',
+        borderRadius: 5,
+        padding: 12,
+        width: '75%',
+        alignSelf: 'center',
+        alignItems: 'center',
+        marginTop: 7,
+        marginBottom:30
+    },
     button: {
         backgroundColor: '#8B4513',
         borderRadius: 5,
-        padding: 15,
+        padding: 12,
         alignItems: 'center',
         marginTop: 10,
     },
@@ -134,7 +144,7 @@ export default StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 8,
         padding: 16,
-        marginBottom: 16,
+        // marginBottom: 16,
     },
     infoHeader: {
         fontSize: 19,
@@ -179,5 +189,8 @@ export default StyleSheet.create({
         marginBottom: 7, 
         marginTop: 7, 
         fontSize: 15
+    },
+    margin:{
+        marginBottom: 20
     }
 })

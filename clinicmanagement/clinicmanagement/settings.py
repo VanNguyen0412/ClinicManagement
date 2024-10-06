@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-a_$_vzt@o1oin%rp&-1x=ftngh)y)*gpy21crv&9c1f!(tyja-
 DEBUG = True
 
 ALLOWED_HOSTS = ['192.168.1.252']
-# ALLOWED_HOSTS = ['192.168.234.39']
+# ALLOWED_HOSTS = ['192.168.234.42']
 
 MEDIA_ROOT = f"{BASE_DIR}/clinicapi/static/"
 
@@ -159,10 +159,4 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'yanghara2611@gmail.com'
 EMAIL_HOST_PASSWORD = 'iiyi bfps ggeq arti'
-# MoMo Payment Config
-MOMO_PARTNER_CODE = 'YourPartnerCode'
-MOMO_ACCESS_KEY = 'YourAccessKey'
-MOMO_SECRET_KEY = 'YourSecretKey'
-MOMO_ENDPOINT = 'https://test-payment.momo.vn/gw_payment/transactionProcessor'
-RETURN_URL = 'https://192.168.1.252:8000/payment/momo/return/'
-NOTIFY_URL = 'https://192.168.1.252:8000/payment/momo/notify/'
+

@@ -33,22 +33,30 @@ export default StyleSheet.create({
     name: {
         fontSize: 15,
         fontWeight: '600',
+        fontFamily: 'serif',
+
     },
     unit: {
         fontSize: 14,
         color: '#888',
         marginTop: 4,
+        fontFamily: 'serif',
+
     },
     price: {
         fontSize: 14,
         color: '#8B4513',
         marginTop: 24,
-        fontWeight: '500'
+        fontWeight: '500',
+        fontFamily: 'serif',
+
     },
     type: {
         fontSize: 15,
         color: '#835741',
         marginLeft: 10,
+        fontFamily: 'serif',
+
     },
     
     searchContainerList: {
@@ -66,6 +74,8 @@ export default StyleSheet.create({
         flex: 1,
         fontSize: 16,
         marginLeft: 8,
+        fontFamily: 'serif',
+
     },
     margin: {
         flex: 1,
@@ -101,7 +111,9 @@ export default StyleSheet.create({
     },
     isoText: {
         color:'blue', 
-        backgroundColor:'#9ebdd5'
+        backgroundColor:'#9ebdd5',
+        fontFamily: 'serif',
+
     },
     medicineName: {
         fontSize: 19, 

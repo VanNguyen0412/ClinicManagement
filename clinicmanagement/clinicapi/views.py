@@ -1,5 +1,5 @@
 from rest_framework import viewsets, generics, parsers, permissions, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from clinicapi.models import *
@@ -23,10 +23,18 @@ from .perms import *
 from .paginators import *
 from django.utils import timezone
 from datetime import timedelta
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+import json
+from django.http import JsonResponse
+import hashlib
+import hmac
+import requests as external_requests
+from rest_framework.parsers import MultiPartParser, FormParser
 
 
 # Create your views here.
-class NewsViewSet(viewsets.ViewSet, generics.ListAPIView):
+class NewsViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = News.objects.filter(is_active=True)
     serializer_class = NewsSerializer
     permission_classes = [permissions.IsAdminUser]
@@ -153,7 +161,8 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
 
     def get_permissions(self):
         if self.action in ['create_patient', 'update_patient', 'create_health_monitoring',
-                           'update_health_monitoring', 'update_doctor', 'require_receipt', 'get_invoice']:
+                           'update_health_monitoring', 'update_doctor',
+                           'get_invoice_done', 'get_invoice']:
             return [PatientOwner()]
         elif self.action in ['get_health_record']:
             return [DoctorPermission()]
@@ -249,32 +258,8 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
             return Response({"detail": "Đã cập nhập thành công."}, status=status.HTTP_200_OK)
         return Response({"error": "Bệnh nhân chưa có tạo theo dõi sức khỏe"}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['post'], url_path='require', detail=True)
-    def require_receipt(self, request, pk=None):
-        patient = self.get_object()
-        # Kiểm tra xem bệnh nhân đã hoàn tất cuộc hẹn với toa thuốc chưa
-        has_prescription = Prescription.objects.filter(
-            appointment__patient=patient
-        ).exists()
-        nurse = Nurse.objects.get(position='payment_nurse')
-        presciption = Prescription.objects.filter(
-            appointment__patient=patient
-        ).last()
-
-        if has_prescription:
-            notification_content = \
-                f"Yêu cầu thanh toán hóa đơn cho bệnh nhân {patient.last_name} với lịch khám {presciption.appointment.appointment_date}."
-            Notification.objects.create(
-                content=notification_content,
-                type=Notification.Type.INVOICE,
-                user=nurse.user
-            )
-            return Response({'detail': 'Đã yêu cầu thành công.'}, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'Bạn chưa được hoàn thành kết quả khám'}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(methods=['get'], url_path='invoice', detail=True)
-    def get_invoice(self, request, pk=None):
+    @action(methods=['get'], url_path='invoice_done', detail=True)
+    def get_invoice_done(self, request, pk=None):
         patient = self.get_object()
         # Kiểm tra xem bệnh nhân đã hoàn tất cuộc hẹn với toa thuốc chưa
         prescriptions = Prescription.objects.filter(
@@ -282,12 +267,26 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
         )
         invoice = []
         for prescription in prescriptions:
-            invoice = Invoice.objects.filter(prescription=prescription)
+            invoice = Invoice.objects.filter(prescription=prescription, is_paid=True)
 
         serializer = InvoiceDetailSerializer(invoice, many=True)
 
         # serializer = PrescriptionSerializer(prescriptions, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], url_path='invoice', detail=True)
+    def get_invoice(self, request, pk=None):
+        patient = self.get_object()
+        # Kiểm tra xem bệnh nhân đã hoàn tất cuộc hẹn với toa thuốc chưa
+
+        prescriptions = Prescription.objects.filter(
+            appointment__patient=patient
+        )
+        invoice = []
+        for prescription in prescriptions:
+            invoice = Invoice.objects.filter(prescription=prescription, is_paid=False)
+        serializer = InvoiceDetailSerializer(invoice, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -513,7 +512,8 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retrie
         Notification.objects.create(
             content=notification_content,
             type=Notification.Type.APPOINTMENT,
-            user=appointment.patient.user  # Assuming `patient` is a ForeignKey to `Patient`
+            user=appointment.patient.user,
+
         )
         notification_content1 = \
             (f"Bạn có lịch hẹn mới ngày {appointment.appointment_date} cho bệnh nhân "
@@ -635,23 +635,9 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
             return [DoctorPermission()]
         elif self.action in ['create_invoice', 'info']:
             return [PaymentNursePermission()]
-        elif self.action in ['get_result_prescription']:
+        elif self.action in ['get_result_prescription', 'require_receipt']:
             return [PatientOwner()]
         return [permissions.AllowAny()]
-
-    @action(methods=['get'], url_path='info', detail=False)
-    def info(self, request, pk=None):
-        patient_name = request.query_params.get('name')
-        date = request.query_params.get('appointment')
-        if patient_name and date:
-            prescription = Prescription.objects.filter(
-                appointment__appointment_date=date,
-                appointment__patient__last_name__icontains=patient_name).first()
-            serializer = PrescriptionSerializer(prescription)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        else:
-            return Response({'error': 'Lỗi '}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['get'], url_path='no_medicine', detail=False)
     def no_prescription(self, request, pk=None):
@@ -681,6 +667,13 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         data['prescription'] = prescription.id
         data['total_price'] = total_price
 
+        notification_content = f"""Y tá đã tạo hóa đơn thành công cho bạn."""
+        Notification.objects.create(
+            content=notification_content,
+            type=Notification.Type.INVOICE,
+            user=prescription.appointment.patient.user,
+            prescription=prescription
+        )
         serializer = InvoiceSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -726,14 +719,16 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
             Notification.objects.create(
                 content=notification_content,
                 type=Notification.Type.GENERAL,
-                user=prescription.appointment.patient.user  # Assuming `patient` is a ForeignKey to `Patient`
+                user=prescription.appointment.patient.user,
+                prescription=prescription
             )
             notification = \
                 f"""Thông tin toa thuốc của bạn"""
             Notification.objects.create(
                 content=notification,
                 type=Notification.Type.MEDICINE,
-                user=prescription.appointment.patient.user  # Assuming `patient` is a ForeignKey to `Patient`
+                user=prescription.appointment.patient.user,
+                prescription=prescription
             )
         else:
             return Response({"error": "Bác sĩ hoàn tất phiếu khám phải là bác sĩ khám."})
@@ -742,13 +737,40 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
     @action(methods=['get'], url_path='result', detail=False)
     def get_result_prescription(self, request, pk=None):
         patients = Patient.objects.get(user=request.user)
-        # appointment = Appointment.objects.filter(patient=patient)
-        presciptions = Prescription.objects.filter(appointment__patient=patients)
-        serializer = PrescriptionSerializer(presciptions, many=True)
+        prescriptions = Prescription.objects.filter(appointment__patient=patients)
+
+        for prescription in prescriptions:
+            has_invoice = Invoice.objects.filter(prescription=prescription).exists()
+
+        serializer = PrescriptionSerializer(prescriptions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(methods=['post'], url_path='require', detail=True)
+    def require_receipt(self, request, pk=None):
+        prescription = self.get_object()
+        patient = Patient.objects.get(user=request.user)
+        # prescription = Prescription.objects.get(id=prescription_id.id)
 
-class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView):
+        nurse = Nurse.objects.get(position='payment_nurse')
+        has_prescription = Prescription.objects.filter(
+            appointment__patient=patient
+        ).exists()
+
+        if has_prescription:
+            notification_content = \
+                f"Yêu cầu thanh toán hóa đơn cho bệnh nhân {patient.last_name} với lịch khám {prescription.appointment.appointment_date}."
+            Notification.objects.create(
+                content=notification_content,
+                type=Notification.Type.INVOICE,
+                user=nurse.user,
+                prescription=prescription
+            )
+            return Response({'detail': 'Đã yêu cầu thành công.'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Bạn chưa được hoàn thành kết quả khám'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView, generics.DestroyAPIView):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -801,35 +823,25 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView):
 
             # Nếu thông báo là về phiếu khám chung
         elif notification.type == Notification.Type.GENERAL:
-            # Lấy phiếu khám của cuộc hẹn gần nhất
-            patient = Patient.objects.get(user=notification.user)
-            appointment = Appointment.objects.filter(patient=patient).first()
-            if appointment:
-                try:
-                    prescription = Prescription.objects.get(appointment=appointment)
-                    prescription_serializer = PrescriptionSerializer(prescription)
-                    return Response(prescription_serializer.data, status=status.HTTP_200_OK)
-                except Prescription.DoesNotExist:
-                    return Response({"error": "No prescription found for this appointment"},
+            try:
+                prescription = Prescription.objects.get(id=notification.prescription.id)
+                prescription_serializer = PrescriptionSerializer(prescription)
+                return Response(prescription_serializer.data, status=status.HTTP_200_OK)
+            except Prescription.DoesNotExist:
+                return Response({"error": "No prescription found for this appointment"},
                                     status=status.HTTP_404_NOT_FOUND)
-            return Response({"error": "No appointment found"}, status=status.HTTP_404_NOT_FOUND)
 
             # Nếu thông báo là về thuốc (medicine)
         elif notification.type == Notification.Type.MEDICINE:
             # Tìm thuốc dựa trên bệnh nhân và cuộc hẹn gần nhất
-            patient = Patient.objects.get(user=notification.user)
-            appointment = Appointment.objects.filter(patient=patient).first()
-            if appointment:
-                try:
-                    # Giả định có model Medicine liên kết với Appointment
-                    prescription = Prescription.objects.get(appointment=appointment)
-                    if prescription:
-                        medicine = PrescriptionMedicine.objects.filter(prescription=prescription)
-                        serializer = PresciptMedicineSerializer(medicine, many=True)
-                        return Response(serializer.data, status=status.HTTP_200_OK)
-                except PrescriptionMedicine.DoesNotExist:
-                    return Response({"error": "No medicine found"}, status=status.HTTP_404_NOT_FOUND)
-            return Response({"error": "No appointment found"}, status=status.HTTP_404_NOT_FOUND)
+            try:
+                prescription = Prescription.objects.get(id=notification.prescription.id)
+                if prescription:
+                    medicine = PrescriptionMedicine.objects.filter(prescription=prescription)
+                    serializer = PresciptMedicineSerializer(medicine, many=True)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+            except PrescriptionMedicine.DoesNotExist:
+                return Response({"error": "No medicine found"}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({"error": "Invalid notification type"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -839,130 +851,136 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView):
 
         if notification.type == Notification.Type.MEDICINE:
             # Tìm thuốc dựa trên bệnh nhân và cuộc hẹn gần nhất
-            patient = Patient.objects.get(user=notification.user)
-            appointment = Appointment.objects.filter(patient=patient).first()
-            if appointment:
-                try:
-                    # Giả định có model Medicine liên kết với Appointment
-                    prescription = Prescription.objects.get(appointment=appointment)
-                    if prescription:
-                        medicines = PrescriptionMedicine.objects.filter(prescription=prescription)
 
-                        # Đăng ký font Times New Roman
-                        font_path = os.path.join(os.path.dirname(__file__), 'path', 'Times New Roman 400.ttf')
-                        font_path1 = os.path.join(os.path.dirname(__file__), 'path', 'SVN-Times New Roman Bold.ttf')
-                        pdfmetrics.registerFont(TTFont('TimesNewRoman', font_path))
-                        pdfmetrics.registerFont(TTFont('bold', font_path1))
+            try:
+                # Giả định có model Medicine liên kết với Appointment
+                prescription = Prescription.objects.get(id=notification.prescription.id)
+                if prescription:
+                    medicines = PrescriptionMedicine.objects.filter(prescription=prescription)
 
-                        # Khởi tạo đối tượng BytesIO để lưu PDF
-                        buffer = BytesIO()
-                        doc = SimpleDocTemplate(buffer, pagesize=A4,
-                                                rightMargin=45, leftMargin=45,
-                                                topMargin=45, bottomMargin=18)
+                    # Đăng ký font Times New Roman
+                    font_path = os.path.join(os.path.dirname(__file__), 'path', 'Times New Roman 400.ttf')
+                    font_path1 = os.path.join(os.path.dirname(__file__), 'path', 'SVN-Times New Roman Bold.ttf')
+                    pdfmetrics.registerFont(TTFont('TimesNewRoman', font_path))
+                    pdfmetrics.registerFont(TTFont('bold', font_path1))
 
-                        styles = getSampleStyleSheet()
-                        styles.add(
-                            ParagraphStyle(name='Title_TNR', fontName='bold', fontSize=25, leading=25, alignment=1))
-                        styles.add(ParagraphStyle(name='Title2_TNR', fontName='TimesNewRoman', fontSize=19, leading=20,
-                                                  alignment=1))
-                        styles.add(ParagraphStyle(name='Normal_TNR', fontName='TimesNewRoman', fontSize=16, leading=18))
-                        styles.add(ParagraphStyle(name='Normal1_TNR', fontName='TimesNewRoman', fontSize=16, leading=18,
-                                                  alignment=1))
-                        styles.add(ParagraphStyle(name='bold_TNR', fontName='bold', fontSize=16, leading=18))
-                        styles.add(
-                            ParagraphStyle(name='RightAligned1', fontName='bold', fontSize=18, leading=20, alignment=2))
-                        styles.add(
-                            ParagraphStyle(name='RightAligned', fontName='bold', fontSize=16, leading=18, alignment=2))
+                    # Khởi tạo đối tượng BytesIO để lưu PDF
+                    buffer = BytesIO()
+                    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                                            rightMargin=45, leftMargin=45,
+                                            topMargin=45, bottomMargin=18)
 
-                        elements = []
-                        elements.append(Paragraph("PHÒNG KHÁM TƯ NHÂN VÍTALCARE CLINIC", styles['Title_TNR']))
+                    styles = getSampleStyleSheet()
+                    styles.add(
+                        ParagraphStyle(name='Title_TNR', fontName='bold', fontSize=25, leading=25, alignment=1))
+                    styles.add(ParagraphStyle(name='Title2_TNR', fontName='TimesNewRoman', fontSize=19, leading=20,
+                                              alignment=1))
+                    styles.add(ParagraphStyle(name='Normal_TNR', fontName='TimesNewRoman', fontSize=16, leading=18))
+                    styles.add(ParagraphStyle(name='Normal1_TNR', fontName='TimesNewRoman', fontSize=16, leading=18,
+                                              alignment=1))
+                    styles.add(ParagraphStyle(name='bold_TNR', fontName='bold', fontSize=16, leading=18))
+                    styles.add(
+                        ParagraphStyle(name='RightAligned1', fontName='bold', fontSize=18, leading=20, alignment=2))
+                    styles.add(
+                        ParagraphStyle(name='RightAligned', fontName='bold', fontSize=16, leading=18, alignment=2))
 
-                        elements.append(Spacer(1, 7))
-                        elements.append(Paragraph("Trường Đại học Mở Thành phố Hồ Chí Minh", styles['Title2_TNR']))
+                    elements = []
+                    elements.append(Paragraph("PHÒNG KHÁM TƯ NHÂN VÍTALCARE CLINIC", styles['Title_TNR']))
 
-                        elements.append(Spacer(1, 4))
-                        elements.append(Paragraph("Địa chỉ: 97 Võ Văn Tần, P. Võ Thị Sáu, Q. 3, TP Hồ Chí Minh",
-                                                  styles['Normal1_TNR']))
+                    elements.append(Spacer(1, 7))
+                    elements.append(Paragraph("Trường Đại học Mở Thành phố Hồ Chí Minh", styles['Title2_TNR']))
 
-                        # Tiêu đề
-                        elements.append(Spacer(1, 15))
-                        elements.append(Paragraph("PHIẾU KẾT QUẢ KHÁM", styles['Title_TNR']))
+                    elements.append(Spacer(1, 4))
+                    elements.append(Paragraph("Địa chỉ: 97 Võ Văn Tần, P. Võ Thị Sáu, Q. 3, TP Hồ Chí Minh",
+                                              styles['Normal1_TNR']))
 
-                        # Thông tin bệnh nhân
-                        patient_info = [
-                            f"Họ và Tên: {prescription.appointment.patient.first_name} {prescription.appointment.patient.last_name}",
-                            f"Mã Bệnh Nhân: MH{prescription.appointment.patient.code}",
-                            f"Ngày Khám: {prescription.appointment.appointment_date}",
-                            f"Giờ Khám: {prescription.appointment.appointment_time}",
-                            f"Bác Sĩ Chỉ Định: {prescription.doctor.first_name} {prescription.doctor.last_name}",
-                            f"Chuyên Khoa: {prescription.doctor.expertise}",
-                        ]
+                    # Tiêu đề
+                    elements.append(Spacer(1, 15))
+                    elements.append(Paragraph("PHIẾU KẾT QUẢ KHÁM", styles['Title_TNR']))
 
-                        elements.append(Spacer(1, 15))
-                        elements.append(Paragraph(f"I. THÔNG TIN BỆNH NHÂN:", styles['bold_TNR']))
-                        elements.append(Spacer(1, 7))
+                    # Thông tin bệnh nhân
+                    patient_info = [
+                        f"Họ và Tên: {prescription.appointment.patient.first_name} {prescription.appointment.patient.last_name}",
+                        f"Mã Bệnh Nhân: MH{prescription.appointment.patient.code}",
+                        f"Ngày Khám: {prescription.appointment.appointment_date}",
+                        f"Giờ Khám: {prescription.appointment.appointment_time}",
+                        f"Bác Sĩ Chỉ Định: {prescription.doctor.first_name} {prescription.doctor.last_name}",
+                        f"Chuyên Khoa: {prescription.doctor.expertise}",
+                    ]
 
-                        for info in patient_info:
-                            elements.append(Paragraph(info, styles['Normal_TNR']))
-                            elements.append(Spacer(1, 5))  # Spacer giữa các dòng thông tin
+                    elements.append(Spacer(1, 15))
+                    elements.append(Paragraph(f"I. THÔNG TIN BỆNH NHÂN:", styles['bold_TNR']))
+                    elements.append(Spacer(1, 7))
 
-                        results = [
-                            f"Triệu Chứng: {prescription.symptom}",
-                            f"Chẩn Đoán: {prescription.diagnosis}",
-                        ]
+                    for info in patient_info:
+                        elements.append(Paragraph(info, styles['Normal_TNR']))
+                        elements.append(Spacer(1, 5))  # Spacer giữa các dòng thông tin
 
-                        elements.append(Spacer(1, 10))
-                        elements.append(Paragraph(f"II. KẾT QUẢ CHẨN ĐOÁN:", styles['bold_TNR']))
-                        elements.append(Spacer(1, 7))
-                        for result in results:
-                            elements.append(Paragraph(result, styles['Normal_TNR']))
-                            elements.append(Spacer(1, 5))  # Spacer giữa các dòng thông tin
+                    results = [
+                        f"Triệu Chứng: {prescription.symptom}",
+                        f"Chẩn Đoán: {prescription.diagnosis}",
+                    ]
 
-                        elements.append(Spacer(1, 12))
-                        elements.append(Paragraph(f"III. TOA THUỐC :", styles['bold_TNR']))
-                        elements.append(Spacer(1, 10))
-                        if medicines.exists():
-                            data = [["Tên thuốc", "Giá", "Cách Dùng", "Số Lượng"]]
-                            for medicine in medicines:
-                                data.append([
-                                    Paragraph(medicine.medicine.name, styles['Normal_TNR']),
-                                    Paragraph(str(medicine.price), styles['Normal_TNR']),
-                                    Paragraph(medicine.dosage, styles['Normal_TNR']),
-                                    Paragraph(f"{medicine.count} {medicine.medicine.unit}", styles['Normal_TNR'])
-                                ])
+                    elements.append(Spacer(1, 10))
+                    elements.append(Paragraph(f"II. KẾT QUẢ CHẨN ĐOÁN:", styles['bold_TNR']))
+                    elements.append(Spacer(1, 7))
+                    for result in results:
+                        elements.append(Paragraph(result, styles['Normal_TNR']))
+                        elements.append(Spacer(1, 5))  # Spacer giữa các dòng thông tin
 
-                            table = Table(data, colWidths=[4 * inch, 1 * inch, 2 * inch, 1 * inch])
-                            table.setStyle(TableStyle([
-                                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                                ('FONTNAME', (0, 0), (-1, 0), 'bold'),
-                                ('FONTSIZE', (0, 0), (-1, 0), 15),
-                                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                            ]))
-                            elements.append(table)
+                    elements.append(Spacer(1, 12))
+                    elements.append(Paragraph(f"III. TOA THUỐC :", styles['bold_TNR']))
+                    elements.append(Spacer(1, 10))
+                    if medicines.exists():
+                        data = [["Tên thuốc", "Giá", "Cách Dùng", "Số Lượng"]]
+                        for medicine in medicines:
+                            data.append([
+                                Paragraph(medicine.medicine.name, styles['Normal_TNR']),
+                                Paragraph(str(medicine.price), styles['Normal_TNR']),
+                                Paragraph(medicine.dosage, styles['Normal_TNR']),
+                                Paragraph(f"{medicine.count} {medicine.medicine.unit}", styles['Normal_TNR'])
+                            ])
 
-                        doctor_info = f"{prescription.doctor.first_name} {prescription.doctor.last_name}"
-                        elements.append(Spacer(1, 17))
-                        elements.append(Paragraph(f"BÁC SĨ CHỈ ĐỊNH", styles['RightAligned1']))
-                        elements.append(Spacer(1, 5))
-                        elements.append(Paragraph(doctor_info, styles['RightAligned']))
-                        # Hoàn thành PDF
-                        doc.build(elements)
+                        table = Table(data, colWidths=[4 * inch, 1 * inch, 2 * inch, 1 * inch])
+                        table.setStyle(TableStyle([
+                            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                            ('FONTNAME', (0, 0), (-1, 0), 'bold'),
+                            ('FONTSIZE', (0, 0), (-1, 0), 15),
+                            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                        ]))
+                        elements.append(table)
 
-                        buffer.seek(0)
+                    doctor_info = f"{prescription.doctor.first_name} {prescription.doctor.last_name}"
+                    elements.append(Spacer(1, 17))
+                    elements.append(Paragraph(f"BÁC SĨ CHỈ ĐỊNH", styles['RightAligned1']))
+                    elements.append(Spacer(1, 5))
+                    elements.append(Paragraph(doctor_info, styles['RightAligned']))
+                    # Hoàn thành PDF
+                    doc.build(elements)
 
-                        # Tạo phản hồi HTTP với nội dung PDF
-                        response = HttpResponse(buffer, content_type='application/pdf')
-                        response['Content-Disposition'] = f'attachment; filename="ToaThuoc.pdf"'
-                        return response
+                    buffer.seek(0)
 
-                except PrescriptionMedicine.DoesNotExist:
-                    return Response({"error": "No medicine found"}, status=status.HTTP_404_NOT_FOUND)
-            return Response({"error": "No appointment found"}, status=status.HTTP_404_NOT_FOUND)
-        return Response({"error": "Thông báo không phải là thông báo loại toa thuốc"})
+                    # Tạo phản hồi HTTP với nội dung PDF
+                    response = HttpResponse(buffer, content_type='application/pdf')
+                    response['Content-Disposition'] = f'attachment; filename="ToaThuoc.pdf"'
+                    return response
+
+            except PrescriptionMedicine.DoesNotExist:
+                return Response({"error": "No medicine found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "No appointment found"}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(methods=['get'], url_path='get_prescription', detail=True)
+    def info(self, request, pk=None):
+        notification = self.get_object()
+        prescription = Prescription.objects.get(id=notification.prescription.id)
+        if prescription:
+            serializer = PrescriptionSerializer(prescription)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'error': 'Không tìm thấy phiếu khám'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class MedicineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -1130,7 +1148,7 @@ class PredictView(APIView):
         return Response({'prediction': prediction})
 
 
-class InvoiceViewSet(viewsets.ViewSet, generics.ListAPIView):
+class InvoiceViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Invoice.objects.all()
     serializer_class = InvoiceSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -1208,3 +1226,132 @@ class RemoveAnswer(viewsets.ViewSet):
             return Response({"detail": "Không tìm thấy câu hỏi."}, status=status.HTTP_404_NOT_FOUND)
         except ForumAnswers.DoesNotExist:
             return Response({"detail": "Không tìm thấy câu trả lời."}, status=status.HTTP_404_NOT_FOUND)
+
+    def partial_update(self, request, question=None, answer=None):
+        try:
+            question = ForumQuestion.objects.get(id=question)
+            forum_answer = ForumAnswers.objects.get(forum_question=question, id=answer)
+
+            # Kiểm tra quyền sở hữu câu trả lời
+            if forum_answer.user.id != request.user.id:
+                return Response({'error': 'Bạn không có quyền chỉnh sửa câu trả lời này'},
+                                status=status.HTTP_403_FORBIDDEN)
+
+            # Cập nhật thuộc tính được gửi trong request
+            title = request.data.get('title', None)
+            content = request.data.get('content', None)
+
+            if title:
+                forum_answer.title = title
+            if content:
+                forum_answer.content = content
+
+            # Lưu thay đổi
+            forum_answer.save()
+
+            return Response({"detail": "Đã cập nhật câu trả lời thành công."}, status=status.HTTP_200_OK)
+
+        except ForumQuestion.DoesNotExist:
+            return Response({"detail": "Không tìm thấy câu hỏi."}, status=status.HTTP_404_NOT_FOUND)
+        except ForumAnswers.DoesNotExist:
+            return Response({"detail": "Không tìm thấy câu trả lời."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class MoMoViewSet(viewsets.ViewSet):
+    def get_permissions(self):
+        if self.action in ['momo_payment_request']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
+
+    @action(methods=['post'], url_path='create_momo', detail=False)
+    def momo_payment_request(self, request):
+        invoice_id = request.query_params.get('invoice_id')
+        try:
+            invoice = Invoice.objects.get(id=invoice_id)
+            endpoint = "https://test-payment.momo.vn/v2/gateway/api/create"
+            partner_code = "MOMO"
+            access_key = "F8BBA842ECF85"
+            secret_key = "K951B6PE1waDMi640xX08PD3vg6EkVlz"
+            order_info = "pay with MoMo"
+            redirect_url = "http://192.168.1.252:8000/momo/return/"
+            ipn_url = "http://192.168.1.252:8000/momo/return/"
+            amount = str(invoice.total_price + invoice.consultation_fee)
+            order_id = str(uuid.uuid4())
+            extra_data = ""
+            request_id = str(uuid.uuid4())
+            request_type = 'captureWallet'
+
+            invoice.order_id = order_id  # Lưu order_id vào hóa đơn
+            invoice.save()
+
+            # Tạo chữ ký
+            raw_signature = ("accessKey=" + access_key +
+                             "&amount=" + amount +
+                             "&extraData=" + extra_data +
+                             "&ipnUrl=" + ipn_url +
+                             "&orderId=" + order_id +
+                             "&orderInfo=" + order_info +
+                             "&partnerCode=" + partner_code +
+                             "&redirectUrl=" + redirect_url +
+                             "&requestId=" + request_id +
+                             "&requestType=" + request_type)
+
+            signature = hmac.new(secret_key.encode('utf-8'), raw_signature.encode('utf-8'), hashlib.sha256).hexdigest()
+
+            data = {
+                "partnerCode": partner_code,
+                "partnerName": "Test",
+                "storeId": "MoMoTestStore",
+                "requestId": request_id,
+                "amount": amount,
+                "orderId": order_id,
+                "orderInfo": order_info,
+                "redirectUrl": redirect_url,
+                "ipnUrl": ipn_url,
+                "lang": "vi",
+                "extraData": extra_data,
+                "requestType": request_type,
+                "signature": signature
+            }
+
+            # Gửi dữ liệu dưới dạng JSON
+            response = external_requests.post(endpoint, json=data, headers={"Content-Type": "application/json"})
+            if response.status_code == 200:
+                payUrl = response.json().get('payUrl')
+                return Response({'payUrl': payUrl})
+            else:
+                error_detail = response.json()
+                return Response({'error': error_detail}, status=response.status_code)
+
+        except Invoice.DoesNotExist:
+            return JsonResponse({"error": "Invoice not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=['get'], url_path='return')
+    def return_url(self, request):
+        try:
+            order_id = request.query_params.get('orderId')
+            result_code = request.query_params.get('resultCode')
+            message = request.query_params.get('message')
+
+            if not order_id:
+                return Response({'message': 'Thiếu orderId trong URL'}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                invoice = Invoice.objects.get(order_id=order_id)
+
+                if result_code == '0':  # 0 là mã thành công
+                    invoice.is_paid = True
+                    invoice.payment_method = Invoice.PAYMENT_CHOICES.MOMO
+                    invoice.save()
+
+                    return Response({'message': 'Thanh toán thành công', 'order_id': order_id},
+                                    status=status.HTTP_200_OK)
+                else:
+                    return Response({'message': f'Thanh toán thất bại: {message}', 'order_id': order_id},
+                                    status=status.HTTP_400_BAD_REQUEST)
+
+            except Invoice.DoesNotExist:
+                return Response({'message': 'Không tìm thấy hóa đơn với orderId này'}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({'message': f'Có lỗi xảy ra: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
