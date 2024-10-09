@@ -42,21 +42,42 @@ export default StyleSheet.create({
     },
     container: {
         flex: 1,
-        justifyContent: 'flex-end', // Align content to bottom
-        alignItems: 'flex-end', // Align content to right
-        padding: 20, // Add padding so it's not too close to the screen edges
+        justifyContent: 'flex-end', 
+        alignItems: 'flex-end', 
+        padding: 20,
+    },
+    containerAdd: {
+        position: 'relative',
+        // flex: 1,
+        justifyContent: 'flex-end', 
+        alignItems: 'flex-end', 
+        marginRight: 10,
+        marginBottom: 5,
+        // padding: 20,
     },
     plusButton: {
-        backgroundColor: "#835741", // Optional: Set a background color for the button
-        borderRadius: 50,  // Optional: To make the button rounder
-        padding: 10,  // Optional: Padding around the icon
-        elevation: 5,  // Optional: Add some shadow (only for Android)
-        shadowColor: "#000",  // Optional: Shadow for iOS
-        shadowOffset: { width: 0, height: 2 },  // Optional: Shadow for iOS
-        shadowOpacity: 0.3,  // Optional: Shadow for iOS
+        backgroundColor: "#835741", 
+        borderRadius: 50,  
+        padding: 10,  
+        elevation: 5, 
+        shadowColor: "#000",  
+        shadowOffset: { width: 0, height: 2 },  
+        shadowOpacity: 0.3,  
         shadowRadius: 3,
         borderWidth: 1,
         borderColor: '#835741'
+    },
+    addButton: {
+        backgroundColor: "#e6c4a8", 
+        borderRadius: 25,  
+        elevation: 5,  
+        shadowColor: "#000",  
+        shadowOffset: { width: 0, height: 2 },  
+        shadowOpacity: 0.3,  
+        shadowRadius: 3,
+        borderWidth: 1,
+        borderColor: '#835741',
+        padding: 10
     },
     content: {
         fontFamily: 'serif',

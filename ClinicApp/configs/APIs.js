@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// const BASE_URL = 'http://192.168.234.42:8000/';
-const BASE_URL = 'http://192.168.1.252:8000/';
+const BASE_URL = 'http://192.168.234.43:8000/';
+// const BASE_URL = 'http://192.168.1.252:8000/';
 
 export const endpoints = {
     'login': '/o/token/',
@@ -9,6 +9,7 @@ export const endpoints = {
     'create-patient': '/patient/create/',
     'create-user': '/user/patient/',
     'confirm-user': '/user/verify-otp/',
+    'user': (userId) =>  `/user/${userId}`,
     'current-patient': '/patient/current/',
     'new': '/new/',
     'new-detail': (newId) => `/new/${newId}`,
@@ -52,7 +53,7 @@ export const endpoints = {
     'predict': '/predict/',
     'forum': '/forum/',
     'create-forum': '/forum/create_forum/',
-    'forum-detail': (forumId) => `/forum/${forumId}`,
+    'forum-detail': (forumId) => `/forum/${forumId}/`,
     'forum-delete': (forumId) => `/forum/${forumId}/delete_forum/`,
     'forum-update': (forumId) => `/forum/${forumId}/update_forum/`,
     'answer-forum': (forumId) => `/forum/${forumId}/create_answer/`,
@@ -64,7 +65,8 @@ export const endpoints = {
     'delete-answer': (forumId, answerId) => `/forum/${forumId}/answer/${answerId}/`,
     'pres-info': (notificationId) => `/notification/${notificationId}/get_prescription/`,
     'cacul-invoice': (prescriptionId) => `/prescription/${prescriptionId}/invoice/`,
-    'invoice-detail': (invoiceId) => `/invoice/${invoiceId}`,
+    'invoice-detail': (invoiceId) => `/invoice/${invoiceId}/`,
+    'proof-payment': (invoiceId) => `/invoice/${invoiceId}/upload_payment_proof/`
     
 }
 

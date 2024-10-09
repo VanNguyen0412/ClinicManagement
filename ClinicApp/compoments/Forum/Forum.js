@@ -4,12 +4,16 @@ import { FontAwesome } from "@expo/vector-icons";
 import { useContext, useEffect, useState } from "react";
 import APIs, { authApi, endpoints } from "../../configs/APIs";
 import moment from "moment";
-import { ActivityIndicator, Menu, PaperProvider } from "react-native-paper";
+import { ActivityIndicator, AnimatedFAB, Icon, Menu, PaperProvider } from "react-native-paper";
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ForumDetail from "./ForumDetail";
 import { MyUserContext } from "../../configs/Context";
 import styles from "./styles";
+import style from "../HealthMonitoring/style";
+import ChatScreen from "../Chat/ChatSreen";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, where, getDocs } from "firebase/firestore";
+import { db } from "../Chat/firebaseConfig";
 
 const Forum = () => {
     const [forums, setForums] = useState([]);
@@ -25,10 +29,14 @@ const Forum = () => {
     const [update, setUpdate] = useState(false);
     const [editForumId, setEditForumId] = useState(null); // ID của diễn đàn đang chỉnh sửa
     const [patient, setPatient] = useState({});
+    const [chat, setChat] = useState(false);
+    const [chatId, setChatId] = useState(0);
+    const [chatsList, setChatsList] = useState([]);
+    const [viewingChats, setViewingChats] = useState(false);
 
     const getPatient = async () => {
         try {
-            if (user && user.id) {
+            if (user && user.id && user.role === 'patient') {
                 let url = `${endpoints['current-patient']}?user=${user.id}`;
                 const res = await APIs.get(url);
                 setPatient(res.data);
@@ -82,7 +90,7 @@ const Forum = () => {
                 Alert.alert("VítalCare Clinic", "Đã xóa diễn đàn thành công.");
                 loadForumData();
                 // handleDismissMenu(forumId)
-            } else if(res.status === 400){
+            } else if (res.status === 400) {
                 Alert.alert("Error", "Xóa diễn đàn bị lỗi. Bạn không có quyền xóa diễn đàn này.");
             }
         } catch (error) {
@@ -229,26 +237,57 @@ const Forum = () => {
     }, [user]);
 
     const handleEdit = (forum) => {
-        if(forum.patient.id === patient.id){
-            setEditForumId(forum.id); 
-            setTitle(forum.title); 
+        if (forum.patient.id === patient.id) {
+            setEditForumId(forum.id);
+            setTitle(forum.title);
             setContent(forum.content);
-        }else{
+        } else {
             Alert.alert("VítalCare Clinic", "Bạn không quyền chỉnh sửa diễn đàn này.")
         }
-        
+
     };
 
     const handleCancelEdit = () => {
-        setEditForumId(null); 
-        setTitle(''); 
-        setContent(''); 
+        setEditForumId(null);
+        setTitle('');
+        setContent('');
     };
 
+    const handleChat = () => {
+        if(user.id === 7 || user.role === 'patient'){
+            setChat(true)
+        }else{
+            Alert.alert("VítalCare Clinic", "Chỉ có Bác Sĩ Bình thực hiện điều này.")
+        }
+    }
+
+    const handleBackChat = () => {
+        setChat(false);
+        // setViewingChats(false);
+    };
+
+    if (chat) {
+        return <ChatScreen onBack={handleBackChat} />;
+    }
 
     if (nav && detail) {
         return <ForumDetail detail={detail} onBack={handleBackNav} />
     }
+
+    // if (viewingChats) {
+    //     return (
+    //         <FlatList
+    //             data={chatsList}
+    //             renderItem={({ item }) => (
+    //                 <TouchableOpacity onPress={() => setChatId(item.id)}>
+    //                     <Text>Trò chuyện với bệnh nhân {item.participants[0]}</Text>
+    //                 </TouchableOpacity>
+    //             )}
+    //             keyExtractor={(item) => item.id}
+    //         />
+    //     );
+    // }
+
 
     return (
         <PaperProvider>
@@ -306,7 +345,7 @@ const Forum = () => {
                         {editForumId === forum.id ? (
                             // Nếu ID trùng với ID đang chỉnh sửa, hiển thị TextInput để người dùng sửa
                             <View>
-                                
+
                                 <TextInput
                                     style={styles.input}
                                     value={title}
@@ -379,6 +418,12 @@ const Forum = () => {
                 </Modal>
             )
             }
+            <View style={style.containerAdd}>
+                <TouchableOpacity style={style.addButton} onPress={handleChat}>
+                    <FontAwesome name="comments-o" size={45} color="#fff" />
+                </TouchableOpacity>
+            </View>
+
         </PaperProvider>
     )
 }

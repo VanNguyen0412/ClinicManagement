@@ -9,6 +9,7 @@ import { ActivityIndicator, SegmentedButtons } from "react-native-paper";
 import styles from "../Appointment/styles";
 import moment from "moment";
 import InvoiceDetail from "./InvoiceDetail";
+import { RefreshControl } from "react-native";
 
 const Invoice = ({ patientId, onBack }) => {
     const nav = useNavigation()
@@ -19,6 +20,22 @@ const Invoice = ({ patientId, onBack }) => {
     const [no_paid, setNoPaid] = useState([])
     const [payment, setPayment] = useState(false)
     const [result, setResult] = useState([]);
+    const [refreshing1, setRefreshing1] = useState(false);
+    const [refreshing2, setRefreshing2] = useState(false);
+
+    const onRefresh1 = async () => {
+        setRefreshing1(true);
+        
+        await loadInvoiceNoPaid(); // Load lại thuốc
+        setRefreshing1(false);
+    };
+
+    const onRefresh2 = async () => {
+        setRefreshing2(true);
+        
+        await loadInvoice(); // Load lại thuốc
+        setRefreshing2(false);
+    };
 
     const loadResult = async () => {
         setLoading(true)
@@ -156,7 +173,7 @@ const Invoice = ({ patientId, onBack }) => {
                 {value === 'require' && (
                     <ScrollView style={{ marginBottom: 20 }}>
                         {result.map((result) => (
-                            <View style={{ flex: 1, padding: 8, marginBottom: 5 }}>
+                            <View style={{ flex: 1, padding: 8, marginBottom: 5 }} key={result.id}>
                                 <View style={{ borderWidth: 2, padding: 8, borderRadius: 6, borderColor: '#835741' }}>
                                     <View>
                                         <Text style={{ marginBottom: 5, fontFamily: 'serif', fontSize: 17, fontWeight: '700' }} >
@@ -181,7 +198,13 @@ const Invoice = ({ patientId, onBack }) => {
                 )}
 
                 {value === 'new' && (
-                    <ScrollView>
+                    <ScrollView 
+                    refreshControl={ // Thêm RefreshControl để làm mới khi kéo xuống
+                        <RefreshControl
+                            refreshing={refreshing1}
+                            onRefresh={onRefresh1}
+                        />
+                    }>
                         <Text style={{ fontFamily: 'serif', marginBottom: 10, fontSize: 17, fontWeight: '700' }}>
                             Hóa đơn của bạn</Text>
                         {no_paid.map((no) => (
@@ -207,7 +230,13 @@ const Invoice = ({ patientId, onBack }) => {
                 )}
 
                 {value === 'done' && (
-                    <ScrollView>
+                    <ScrollView
+                    refreshControl={ // Thêm RefreshControl để làm mới khi kéo xuống
+                        <RefreshControl
+                            refreshing={refreshing2}
+                            onRefresh={onRefresh2}
+                        />
+                    }>
                         <Text style={{ fontFamily: 'serif', marginBottom: 10, fontSize: 17, fontWeight: '700' }}>
                             Danh sách hóa đơn đã thanh toán</Text>
                         {invoice.map((invoice) => (

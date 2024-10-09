@@ -265,14 +265,14 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
         prescriptions = Prescription.objects.filter(
             appointment__patient=patient
         )
-        invoice = []
+
+
         for prescription in prescriptions:
             invoice = Invoice.objects.filter(prescription=prescription, is_paid=True)
-
-        serializer = InvoiceDetailSerializer(invoice, many=True)
-
-        # serializer = PrescriptionSerializer(prescriptions, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            serializer = InvoiceDetailSerializer(invoice, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'detail': []},
+                        status=status.HTTP_404_NOT_FOUND)
 
     @action(methods=['get'], url_path='invoice', detail=True)
     def get_invoice(self, request, pk=None):
@@ -282,11 +282,11 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
         prescriptions = Prescription.objects.filter(
             appointment__patient=patient
         )
-        invoice = []
         for prescription in prescriptions:
             invoice = Invoice.objects.filter(prescription=prescription, is_paid=False)
-        serializer = InvoiceDetailSerializer(invoice, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            serializer = InvoiceDetailSerializer(invoice, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'detail': []}, status=status.HTTP_404_NOT_FOUND)
 
 
 class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -667,18 +667,20 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         data['prescription'] = prescription.id
         data['total_price'] = total_price
 
-        notification_content = f"""Y tá đã tạo hóa đơn thành công cho bạn."""
-        Notification.objects.create(
-            content=notification_content,
-            type=Notification.Type.INVOICE,
-            user=prescription.appointment.patient.user,
-            prescription=prescription
-        )
-        serializer = InvoiceSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        if medicines:
+            notification_content = f"""Y tá đã tạo hóa đơn thành công cho bạn."""
+            Notification.objects.create(
+                content=notification_content,
+                type=Notification.Type.INVOICE,
+                user=prescription.appointment.patient.user,
+                prescription=prescription
+            )
+            serializer = InvoiceSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'error': 'Hóa đơn chưa được kê toa thuốc.'}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['post'], url_path='create_medicine', detail=True)
     def create_prescription(self, request, pk=None):
@@ -1168,7 +1170,7 @@ class InvoiceViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
                 "error": "Payment proof has already been uploaded. You cannot upload it again."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        payment_method = request.data.get('payment_method')
+        payment_method = Invoice.PAYMENT_CHOICES.MOMO
         payment_proof = request.FILES.get('payment_proof')  # Giả định file tải lên nằm trong FILES
 
         # Kiểm tra phương thức thanh toán và hình minh chứng
@@ -1191,12 +1193,7 @@ class InvoiceViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
 
         # Trả về phản hồi thành công
         return Response({
-            "message": "Payment proof uploaded successfully",
-            "invoice_id": invoice.id,
-            "is_paid": invoice.is_paid,
-            "payment_method": invoice.payment_method,
-            "payment": PaymentSerializer(payment)
-        }, status=status.HTTP_200_OK)
+            "message": "Payment proof uploaded successfully"}, status=status.HTTP_200_OK)
 
     # @action(methods=['get'], url_path='')
 

@@ -13,6 +13,7 @@ import { endAsyncEvent } from "react-native/Libraries/Performance/Systrace";
 import { Modal } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
 import { Image } from "react-native";
+import Payment from "./Payment";
 
 const InvoiceDetail = ({ route }) => {
     const [loading, setLoading] = useState(false);
@@ -21,6 +22,8 @@ const InvoiceDetail = ({ route }) => {
     const nav = useNavigation()
     const [detail, setDetail] = useState(null)
     const [patient, setPatient] = useState({});
+    const [payment, setPayment] = useState(false);
+    const [paymentId,setPaymentId] = useState(null)
 
     const loadInvoiceDetail = async () => {
         setLoading(true)
@@ -32,9 +35,6 @@ const InvoiceDetail = ({ route }) => {
             }
             let res = await authApi(token).get(endpoints['invoice-detail'](invoiceId))
             setDetail(res.data)
-
-
-
         } catch (error) {
             Alert.alert("VítalCare Clinic", "Bị lỗi khi load dữ liệu hóa đơn chưa thanh toán.")
 
@@ -65,6 +65,19 @@ const InvoiceDetail = ({ route }) => {
     useEffect(() => {
         loadInvoiceDetail()
     }, [invoiceId])
+
+    const handlePayment = (detailId) => {
+        setPayment(true)
+        setPaymentId(detailId)
+    }
+
+    const handleBack = () => {
+        setPayment(false)
+    }
+
+    if (payment){
+        return <Payment paymentId={paymentId} onBack = {handleBack} />
+    }
 
     return (
         <View>
@@ -132,7 +145,7 @@ const InvoiceDetail = ({ route }) => {
                             <Image source={{ uri: 'https://res.cloudinary.com/dr9h3ttpy/image/upload/v1728151842/cash.png' }} style={{ width: '100%', height: '100%', borderRadius: 10 }} />
                         </TouchableOpacity>
                     </View>
-                    <TouchableOpacity style={style.payment} >
+                    <TouchableOpacity style={style.payment} onPress={() => handlePayment(detail.id)}>
                         <Text style={style.paymentText}>Thanh toán</Text>
                     </TouchableOpacity>
                 </ScrollView>
