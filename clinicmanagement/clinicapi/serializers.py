@@ -339,3 +339,19 @@ class DoctorRatingSerializer(serializers.ModelSerializer):
 
     def get_total_ratings(self, obj):
         return Rating.objects.filter(doctor=obj).count()
+
+
+class CartItemSerializer(serializers.ModelSerializer):
+    medicine = MedicineSerializer()
+
+    class Meta:
+        model = CartItem
+        fields = ['id', 'medicine', 'quantity', 'get_total_price']
+
+
+class CartSerializer(serializers.ModelSerializer):
+    items = CartItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Cart
+        fields = ['id', 'user', 'items', 'created_at']

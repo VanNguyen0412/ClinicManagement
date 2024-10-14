@@ -2,7 +2,7 @@ import { TouchableOpacity, View, Text, Alert, Modal, Image, ScrollView } from "r
 import { FontAwesome } from "@expo/vector-icons";
 import MyStyles from "../../styles/MyStyles";
 import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import APIs, { authApi, endpoints } from "../../configs/APIs";
 import { ActivityIndicator, SegmentedButtons } from "react-native-paper";
@@ -10,8 +10,10 @@ import styles from "../Appointment/styles";
 import moment from "moment";
 import InvoiceDetail from "./InvoiceDetail";
 import { RefreshControl } from "react-native";
+import { MyContext } from "../../App";
 
 const Invoice = ({ patientId, onBack }) => {
+    const {renderCallButton } = useContext(MyContext);
     const nav = useNavigation()
     const [invoice, setInvoice] = useState([])
     const [loading, setLoading] = useState(false);
@@ -45,7 +47,7 @@ const Invoice = ({ patientId, onBack }) => {
                 Alert.alert("Error", "No access token found.");
                 return;
             }
-            let res = await authApi(token).get(endpoints['result']);
+            let res = await authApi(token).get(endpoints['result-invoice']);
             setResult(res.data);
             // console.info(res.data)
         } catch (error) {
@@ -99,9 +101,15 @@ const Invoice = ({ patientId, onBack }) => {
 
             let res = await authApi(token).get(endpoints['invoice'](patientId))
             setInvoice(res.data);
+            console.info(res.data)
 
-        } catch (ex) {
-            Alert.alert("VítalCare Clinic", "Bị lỗi.")
+        } catch (error) {
+            if(error.status === 404){
+                setInvoice([])
+            }else{
+                Alert.alert("VítalCare Clinic", "Bị lỗi.")
+
+            }
         } finally {
             setLoading(false)
 
@@ -121,8 +129,13 @@ const Invoice = ({ patientId, onBack }) => {
             let res = await authApi(token).get(endpoints['invoice-none'](patientId))
             setNoPaid(res.data);
             // console.info(no_paid)
-        } catch (ex) {
-            Alert.alert("VítalCare Clinic", "Bị lỗi khi load dữ liệu hóa đơn chưa thanh toán.")
+        } catch (error) {
+            if(error.status === 404){
+                setNoPaid([])
+            }else{
+                Alert.alert("VítalCare Clinic", "Bị lỗi khi load dữ liệu hóa đơn chưa thanh toán.")
+
+            }
         } finally {
             setLoading(false)
 
@@ -146,7 +159,7 @@ const Invoice = ({ patientId, onBack }) => {
                 <View>
                     <Text style={MyStyles.titleList}>Thông Tin Hóa Đơn</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>
@@ -181,7 +194,7 @@ const Invoice = ({ patientId, onBack }) => {
                                         <Text style={{ marginBottom: 5, fontFamily: 'serif', fontSize: 15 }} >
                                             Bác sĩ: {result.doctor.full_name}</Text>
                                         <Text style={{ marginBottom: 5, fontFamily: 'serif' }}>
-                                            Giờ khám: {result.appointment.appointment_date} </Text>
+                                            Ngày khám: {result.appointment.appointment_date} </Text>
                                         <Text style={{ marginBottom: 5, fontFamily: 'serif' }}>
                                             Giờ khám: {result.appointment.appointment_time}</Text>
                                     </View>
@@ -199,7 +212,7 @@ const Invoice = ({ patientId, onBack }) => {
 
                 {value === 'new' && (
                     <ScrollView 
-                    refreshControl={ // Thêm RefreshControl để làm mới khi kéo xuống
+                    refreshControl={
                         <RefreshControl
                             refreshing={refreshing1}
                             onRefresh={onRefresh1}
@@ -230,7 +243,7 @@ const Invoice = ({ patientId, onBack }) => {
                 )}
 
                 {value === 'done' && (
-                    <ScrollView
+                    <ScrollView style={{marginBottom:150}}
                     refreshControl={ // Thêm RefreshControl để làm mới khi kéo xuống
                         <RefreshControl
                             refreshing={refreshing2}
@@ -240,7 +253,7 @@ const Invoice = ({ patientId, onBack }) => {
                         <Text style={{ fontFamily: 'serif', marginBottom: 10, fontSize: 17, fontWeight: '700' }}>
                             Danh sách hóa đơn đã thanh toán</Text>
                         {invoice.map((invoice) => (
-                            <View key={invoice.id} style={styles.appointmentCard} >
+                            <View key={invoice.id} style={[styles.appointmentCard]} >
                                 <View style={{ flexDirection: 'row' }}>
                                     <Text style={{ fontFamily: 'serif', marginRight: 13, marginTop: 60, fontWeight: '700' }}>Số HĐ: {invoice.id}</Text>
                                     <View>

@@ -1,4 +1,4 @@
-import { View, TouchableOpacity, Text, ScrollView } from "react-native";
+import { View, TouchableOpacity, Text, ScrollView, RefreshControl } from "react-native";
 import MyStyles from "../../styles/MyStyles";
 import { FontAwesome } from "@expo/vector-icons";
 import { useContext, useEffect, useState } from "react";
@@ -14,8 +14,10 @@ import { Modal } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
 import { Image } from "react-native";
 import Payment from "./Payment";
+import { MyContext } from "../../App";
 
 const InvoiceDetail = ({ route }) => {
+    const { renderCallButton } = useContext(MyContext);
     const [loading, setLoading] = useState(false);
     const user = useContext(MyUserContext);
     const { invoiceId } = route.params;
@@ -23,7 +25,25 @@ const InvoiceDetail = ({ route }) => {
     const [detail, setDetail] = useState(null)
     const [patient, setPatient] = useState({});
     const [payment, setPayment] = useState(false);
-    const [paymentId,setPaymentId] = useState(null)
+    const [paymentId, setPaymentId] = useState(null);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await loadInvoiceDetail(); // Load lại thuốc
+        setRefreshing(false);
+    };
+
+    const getType = (type) => {
+        switch (type) {
+            case 'medicine':
+                return 'Giỏ hàng';
+            case 'prescription':
+                return 'Phiếu khám';
+            default:
+                return type;
+        }
+    };
 
     const loadInvoiceDetail = async () => {
         setLoading(true)
@@ -75,8 +95,8 @@ const InvoiceDetail = ({ route }) => {
         setPayment(false)
     }
 
-    if (payment){
-        return <Payment paymentId={paymentId} onBack = {handleBack} />
+    if (payment) {
+        return <Payment paymentId={paymentId} onBack={handleBack} />
     }
 
     return (
@@ -88,7 +108,7 @@ const InvoiceDetail = ({ route }) => {
                 <View>
                     <Text style={[MyStyles.titleList]}>Thanh Toán Hóa Đơn</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>
@@ -107,7 +127,14 @@ const InvoiceDetail = ({ route }) => {
                     </View>
                 </Modal>
                 :
-                <ScrollView style={{ padding: 16 }}>
+                <ScrollView style={{ padding: 16 }}
+                refreshControl={ // Thêm RefreshControl để làm mới khi kéo xuống
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                    />
+                }
+                >
                     <Text style={style.subTitle}>I. Thông tin khách hàng: </Text>
                     <View style={style.invoiceContainer}>
                         <View style={{ flex: 3 }}>
@@ -123,31 +150,63 @@ const InvoiceDetail = ({ route }) => {
                     </View>
                     <Text style={style.subTitle}>II. Chi tiết hóa đơn: </Text>
                     <View style={style.invoiceContainer}>
-                        <View style={{ flex: 3 }}>
-                            <Text style={style.text}>Tiền thuốc: </Text>
-                            <Text style={style.text}>Tiền khám: </Text>
-                            <Text style={style.text}>Tổng hóa đơn: </Text>
-                            <Text style={style.text}>Ngày tạo: </Text>
-                        </View>
+                        {detail.invoice_type === 'prescription' ?
+                            <View style={{ flex: 3 }}>
+                                <Text style={style.text}>Tiền thuốc: </Text>
+                                <Text style={style.text}>Tiền khám: </Text>
+                                <Text style={style.text}>Tổng hóa đơn: </Text>
+                                <Text style={style.text}>Loại hóa đơn: </Text>
+                                <Text style={style.text}>Ngày tạo: </Text>
+                            </View> :
+                            <View style={{ flex: 3 }}>
+                                <Text style={style.text}>Tiền sản phẩm: </Text>
+                                <Text style={style.text}>Thuế: </Text>
+                                <Text style={style.text}>Tổng hóa đơn: </Text>
+                                <Text style={style.text}>Loại hóa đơn: </Text>
+                                <Text style={style.text}>Ngày tạo: </Text>
+                            </View>
+                        }
+
                         <View style={{ flex: 4 }}>
                             <Text style={style.text}>{detail.total_price} VNĐ</Text>
                             <Text style={style.text}>{detail.consultation_fee} VNĐ</Text>
-                            <Text style={style.text}>{patient.phone} VNĐ</Text>
+                            <Text style={style.text}>
+                                {(parseFloat(detail.total_price) + parseFloat(detail.consultation_fee))}.00 VNĐ</Text>
+                            <Text style={style.text}>{getType(detail.invoice_type)}</Text>
                             <Text style={style.text}>{moment(detail.created_at).format('DD MMMM YYYY HH:mm:ss')}</Text>
                         </View>
                     </View>
                     <Text style={style.subTitle}>III. Phương thức thanh toán: </Text>
-                    <View>
-                        <TouchableOpacity style={style.momo}>
-                            <Image source={{ uri: 'https://res.cloudinary.com/dr9h3ttpy/image/upload/v1728151711/momo.jpg' }} style={{ width: '100%', height: '100%', borderRadius: 10 }} />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={style.momo}>
-                            <Image source={{ uri: 'https://res.cloudinary.com/dr9h3ttpy/image/upload/v1728151842/cash.png' }} style={{ width: '100%', height: '100%', borderRadius: 10 }} />
-                        </TouchableOpacity>
-                    </View>
-                    <TouchableOpacity style={style.payment} onPress={() => handlePayment(detail.id)}>
-                        <Text style={style.paymentText}>Thanh toán</Text>
-                    </TouchableOpacity>
+                    {detail.is_paid ?
+                        detail.payment_method === 'momo' ?
+                            <View>
+                                <TouchableOpacity style={style.momo}>
+                                    <Image source={{ uri: 'https://res.cloudinary.com/dr9h3ttpy/image/upload/v1728151711/momo.jpg' }} style={{ width: '100%', height: '100%', borderRadius: 10 }} />
+                                </TouchableOpacity>
+                            </View>
+                            :
+                            <View>
+                                <TouchableOpacity style={style.momo}>
+                                    <Image source={{ uri: 'https://res.cloudinary.com/dr9h3ttpy/image/upload/v1728151842/cash.png' }} style={{ width: '100%', height: '100%', borderRadius: 10 }} />
+                                </TouchableOpacity>
+                            </View>
+                        :
+                        <View>
+                            <View>
+                                <TouchableOpacity style={style.momo}>
+                                    <Image source={{ uri: 'https://res.cloudinary.com/dr9h3ttpy/image/upload/v1728151711/momo.jpg' }} style={{ width: '100%', height: '100%', borderRadius: 10 }} />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={style.momo}>
+                                    <Image source={{ uri: 'https://res.cloudinary.com/dr9h3ttpy/image/upload/v1728151842/cash.png' }} style={{ width: '100%', height: '100%', borderRadius: 10 }} />
+                                </TouchableOpacity>
+                            </View>
+                            <TouchableOpacity style={style.payment} onPress={() => handlePayment(detail.id)}>
+                                <Text style={style.paymentText}>Thanh toán</Text>
+                            </TouchableOpacity>
+                        </View>
+                    }
+
+
                 </ScrollView>
             }
 

@@ -13,6 +13,7 @@ import Toast from 'react-native-toast-message';
 // import { WebView } from 'react-native-webview';
 import { Linking } from "react-native";
 import styles from "../Appointment/styles";
+import { MyContext } from "../../App";
 
 const NotificationDetail = ({ onBack, notificationId }) => {
     const [loading, setLoading] = useState(false);
@@ -26,6 +27,7 @@ const NotificationDetail = ({ onBack, notificationId }) => {
     const [date, setDate] = useState('');
     const [invoice, setInvoice] = useState(null);
     const user = useContext(MyUserContext);
+    const {renderCallButton } = useContext(MyContext);
 
     const handlePress = (medicine) => {
         setSelectedMedicine(medicine);
@@ -102,7 +104,7 @@ const NotificationDetail = ({ onBack, notificationId }) => {
                 // console.info(info)
         } catch (ex) {
             console.error(ex)
-            Alert.alert("VítalCare Clinic", "Hiện thông tin chi tiết bị lỗi");
+            // Alert.alert("VítalCare Clinic", "Hiện thông tin chi tiết bị lỗi");
         } finally {
             setLoading(false)
         }
@@ -315,7 +317,7 @@ const NotificationDetail = ({ onBack, notificationId }) => {
                 <View>
                     <Text style={[MyStyles.titleList]}>Chi tiết thông báo</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>

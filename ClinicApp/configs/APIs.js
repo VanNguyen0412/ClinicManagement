@@ -1,12 +1,13 @@
 import axios from "axios";
 
-const BASE_URL = 'http://192.168.234.43:8000/';
-// const BASE_URL = 'http://192.168.1.252:8000/';
+// const BASE_URL = 'http://192.168.234.55:8000/';
+const BASE_URL = 'http://192.168.1.252:8000/';
 
 export const endpoints = {
     'login': '/o/token/',
     'current-user': '/user/current-user/',
     'create-patient': '/patient/create/',
+    'update-patient': (patientId) => `/patient/${patientId}/update/`,
     'create-user': '/user/patient/',
     'confirm-user': '/user/verify-otp/',
     'user': (userId) =>  `/user/${userId}`,
@@ -46,6 +47,7 @@ export const endpoints = {
     'add-medicines': (prescriptionId) => `prescription/${prescriptionId}/create_medicine/`,
     'delete-medicine': (prescriptionId, medicineId) => `prescription/${prescriptionId}/medicine/?medicine=${medicineId}`,
     'done-prescription':(prescriptionId) => `prescription/${prescriptionId}/medicines/`,
+    'result-invoice': 'prescription/result_invoice/',
     'result': 'prescription/result/',
     'create_health_monitoring': (patientId) => `/patient/${patientId}/create_health_monitoring/`,
     'update-doctor-HM': (patientId) => `/patient/${patientId}/update_doctor/`,
@@ -66,8 +68,11 @@ export const endpoints = {
     'pres-info': (notificationId) => `/notification/${notificationId}/get_prescription/`,
     'cacul-invoice': (prescriptionId) => `/prescription/${prescriptionId}/invoice/`,
     'invoice-detail': (invoiceId) => `/invoice/${invoiceId}/`,
-    'proof-payment': (invoiceId) => `/invoice/${invoiceId}/upload_payment_proof/`
-    
+    'proof-payment': (invoiceId) => `/invoice/${invoiceId}/upload_payment_proof/`,
+    'cart': '/cart/',
+    'cart-user': 'cart/items/',
+    'delete-item': (itemId) => `cart/item/${itemId}/`,
+    'cart-invoice': '/cart/invoice/'
 }
 
 export const authApi = (token) => {

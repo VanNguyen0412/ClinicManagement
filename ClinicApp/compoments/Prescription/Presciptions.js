@@ -10,6 +10,7 @@ import moment from "moment";
 import styles from "../Appointment/styles";
 import CreatePresciption from "../Doctor/CreatePresciption";
 import { MyUserContext } from "../../configs/Context";
+import { MyContext } from "../../App";
 
 const Prescription = ({ onBack, appointmentId }) => {
     const [prescription, setPrescription] = useState([]);
@@ -17,7 +18,8 @@ const Prescription = ({ onBack, appointmentId }) => {
     const [show, setShow] = useState(false);
     const [selectedPre, setSelectedPre] = useState(null);
     const user = useContext(MyUserContext);
-    
+    const {renderCallButton } = useContext(MyContext);
+
     const handleView = (doctor) => {
         loadPrescriptionDetail(doctor)
         setShow(true);
@@ -76,7 +78,7 @@ const Prescription = ({ onBack, appointmentId }) => {
                 <View>
                     <Text style={MyStyles.titleList}>Danh Sách Kết Quả Khám</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>

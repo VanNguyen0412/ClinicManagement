@@ -8,8 +8,11 @@ import { collection, addDoc, onSnapshot, query, orderBy } from "firebase/firesto
 import { db } from "./firebaseConfig";
 import { authApi, endpoints } from "../../configs/APIs";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Alert } from "react-native";
+import { MyContext } from "../../App";
 
 const ChatScreen = ({ onBack }) => {
+    const {renderCallButton } = useContext(MyContext);
     const user = useContext(MyUserContext);
     const userId = user.id;
     const [messages, setMessages] = useState([]);
@@ -26,7 +29,6 @@ const ChatScreen = ({ onBack }) => {
             const msgs = snapshot.docs.map(async (doc) => {
                 const messageData = { id: doc.id, ...doc.data() };
 
-                // Fetch user details for each sender
                 if (!userDetails[messageData.senderId]) {
                     await fetchUserDetails(messageData.senderId);
                 }
@@ -78,7 +80,7 @@ const ChatScreen = ({ onBack }) => {
                 <View>
                     <Text style={MyStyles.titleList}>Trò chuyện</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>

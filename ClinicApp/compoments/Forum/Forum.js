@@ -14,8 +14,10 @@ import style from "../HealthMonitoring/style";
 import ChatScreen from "../Chat/ChatSreen";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, where, getDocs } from "firebase/firestore";
 import { db } from "../Chat/firebaseConfig";
+import { MyContext } from "../../App";
 
 const Forum = () => {
+    const {renderCallButton } = useContext(MyContext);
     const [forums, setForums] = useState([]);
     const [loading, setLoading] = useState(false);
     const [show, setShow] = useState(false);
@@ -295,7 +297,7 @@ const Forum = () => {
                 <View>
                     <Text style={MyStyles.titleList}>Diễn Đàn Câu Hỏi</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>

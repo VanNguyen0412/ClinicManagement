@@ -96,4 +96,60 @@ export default StyleSheet.create({
         borderWidth: 0.5,
     
     },
+    modalOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)', // Màu mờ
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 35,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+        marginTop: 190
+    },
+    modalImage: {
+        width: 150,
+        height: 150,
+        borderRadius: 10,
+        marginBottom: 15,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+        textAlign: 'center',
+        fontFamily: 'serif'
+    },
+    modalText: {
+        marginBottom: 5,
+        fontFamily: 'serif'
+    },
+    modalText1: {
+        marginBottom: 5,
+        fontSize: 16,
+        fontFamily: 'serif'
+    },
+    quantityContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 10
+    },
+    quantityText: {
+        marginLeft: 10,
+        marginRight: 10,
+        fontFamily: 'serif'
+    }
 })

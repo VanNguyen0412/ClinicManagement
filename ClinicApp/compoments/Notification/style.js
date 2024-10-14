@@ -78,6 +78,14 @@ export default StyleSheet.create({
         fontFamily: 'serif'
     
     },
+    tableTitle2: {
+        flex: 2,
+        overflow: 'hidden',
+        textAlign: 'center',
+        fontWeight: 'bold',
+        fontFamily: 'serif'
+    
+    },
     tableTitle3: {
         flex: 1,
         overflow: 'hidden',

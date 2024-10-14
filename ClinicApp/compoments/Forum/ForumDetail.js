@@ -10,8 +10,10 @@ import moment from "moment";
 import styleRatings from "../Doctor/styleRatings";
 import { ActivityIndicator, Menu, PaperProvider } from "react-native-paper";
 import { MyUserContext } from "../../configs/Context";
+import { MyContext } from "../../App";
 
 const ForumDetail = ({ onBack, detail }) => {
+    const {renderCallButton } = useContext(MyContext);
     const [loading, setLoading] = useState(false);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -207,7 +209,7 @@ const ForumDetail = ({ onBack, detail }) => {
                 <View>
                     <Text style={MyStyles.titleList}>Chi Tiết Diễn Đàn</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>

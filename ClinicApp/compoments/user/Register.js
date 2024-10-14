@@ -158,7 +158,7 @@ const Register = () => {
                 </TouchableOpacity>
 
                 <View style={styleUser.footer}>
-                <TouchableOpacity onPress={() => nav.navigate('ConfirmUser')}>
+                <TouchableOpacity onPress={() => nav.navigate('HomeScreen')}>
                     <Text style={[styleUser.footerText, styleUser.margin]}>Quay lại trang chủ</Text>
                 </TouchableOpacity>
                 <Text style={styleUser.footerText}>Bản quyền © 2024</Text>

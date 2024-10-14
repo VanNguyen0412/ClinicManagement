@@ -11,8 +11,10 @@ import moment from 'moment';
 import styles from './styles';
 import { TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MyContext } from '../../App';
 
 const ProfilePatient = ({ onBack }) => {
+    const {renderCallButton } = useContext(MyContext);
     const [patient, setPatient] = useState({});
     const user = useContext(MyUserContext);
     const [loading, setLoading] = useState(false)
@@ -164,7 +166,7 @@ const ProfilePatient = ({ onBack }) => {
                 <View>
                     <Text style={MyStyles.titleList}>Hồ Sơ Đã Lưu</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>

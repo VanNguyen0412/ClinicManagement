@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { View, Text, TouchableOpacity, TextInput, Button, ScrollView } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -10,8 +10,11 @@ import moment from "moment"; // For date formatting
 import { Modal } from "react-native";
 import { Image } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
+import { MyContext } from "../../App";
 
 const HealthMonitoring = () => {
+    const {renderCallButton } = useContext(MyContext);
+
     const nav = useNavigation();
     const [bloodPressure, setBloodPressure] = useState({});
     const [days, setDays] = useState([]);
@@ -91,7 +94,7 @@ const HealthMonitoring = () => {
                 <View>
                     <Text style={MyStyles.titleList}>Theo Dõi Sức Khỏe</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>

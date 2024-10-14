@@ -221,5 +221,8 @@ export default StyleSheet.create({
     borderColor: '#835741',
     borderWidth: 0.5,
 
-},
+  },
+  marginBottom: {
+    marginBottom: 30
+  }
 });

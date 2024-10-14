@@ -215,7 +215,7 @@ class News(BaseModel):
 
 
 class Invoice(models.Model):
-    prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE)
+    prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     invoice_number = models.CharField(max_length=12, default=uuid.uuid4().hex[:12].upper())  # Tạo số hóa đơn ngẫu nhiên
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -230,6 +230,13 @@ class Invoice(models.Model):
 
     payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES, null=True, blank=True)
     is_paid = models.BooleanField(default=False)
+
+    class INVOICE_TYPE(models.TextChoices):
+        PRESCRIPTION = 'prescription'
+        MEDICINE = 'medicine'
+
+    invoice_type = models.CharField(max_length=20, choices=INVOICE_TYPE, null=True,
+                                    blank=True, default=INVOICE_TYPE.PRESCRIPTION)
 
     def calculate_total(self, medicines):
         """Tính tổng tiền thuốc cộng với tiền khám"""
@@ -266,3 +273,23 @@ class OTPVerification(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     otp_code = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Cart(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Cart of {self.user}"
+
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.quantity} x {self.medicine.name}"
+
+    def get_total_price(self):
+        return self.medicine.price * self.quantity

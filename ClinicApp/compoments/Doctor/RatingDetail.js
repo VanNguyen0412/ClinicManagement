@@ -11,8 +11,10 @@ import { MyUserContext } from '../../configs/Context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import { RefreshControl } from 'react-native';
+import { MyContext } from '../../App';
 
 const RatingDetail = ({ route, doctorId, onBack }) => {
+  const {renderCallButton } = useContext(MyContext);
   const nav = useNavigation()
   const user = useContext(MyUserContext)
   const [rating, setRating] = useState(0);
@@ -199,7 +201,7 @@ const RatingDetail = ({ route, doctorId, onBack }) => {
           <View>
             <Text style={MyStyles.titleList}>Đánh Giá</Text>
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => renderCallButton()}>
             <FontAwesome name="phone" size={24} color="#835741" />
           </TouchableOpacity>
         </View>
@@ -211,7 +213,7 @@ const RatingDetail = ({ route, doctorId, onBack }) => {
           <View>
             <Text style={MyStyles.titleList}>Đánh Giá</Text>
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => renderCallButton()}>
             <FontAwesome name="phone" size={24} color="#835741" />
           </TouchableOpacity>
         </View>

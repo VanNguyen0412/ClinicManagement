@@ -11,8 +11,10 @@ import { Modal } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { ActivityIndicator } from 'react-native-paper';
 import moment from 'moment';
+import { MyContext } from '../../App';
 
 const Appointment = () => {
+  const {renderCallButton } = useContext(MyContext);
   const nav = useNavigation();
   const user = useContext(MyUserContext);
   const [currentPage, setCurrentPage] = useState(0);
@@ -50,7 +52,7 @@ const Appointment = () => {
       } else if (user.role === 'doctor') {
         let res = await authApi(token).get(endpoints['appointment-confirm']);
         setAppointment(res.data)
-        
+
       } else if (user.role === 'nurse') {
         let res = await authApi(token).get(endpoints['appointment-pending']);
         setAppointment(res.data)
@@ -147,11 +149,10 @@ const Appointment = () => {
 
       {user.role === 'patient' ?
         <View style={MyStyles.headerList}>
-
           <View>
             <Text style={MyStyles.titleList}>Lịch Hẹn Khám Bệnh</Text>
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => renderCallButton()}>
             <FontAwesome name="phone" size={24} color="#835741" />
           </TouchableOpacity>
         </View>
@@ -163,7 +164,7 @@ const Appointment = () => {
           <View>
             <Text style={MyStyles.titleList}>Lịch Hẹn Trong Ngày</Text>
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => renderCallButton()}>
             <FontAwesome name="phone" size={24} color="#835741" />
           </TouchableOpacity>
         </View>

@@ -3,15 +3,17 @@ import { View, Text, TouchableOpacity, FlatList, TextInput } from "react-native"
 import styles from "./styles";
 import { FontAwesome } from "@expo/vector-icons";
 import { ActivityIndicator, Appbar, DataTable } from "react-native-paper";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import MyStyles from "../../styles/MyStyles";
 import moment from "moment";
 import APIs, { authApi, endpoints } from "../../configs/APIs";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
+import { MyContext } from "../../App";
 
 
 const CreatePresciption = ({ onBack, prescription }) => {
+    const {renderCallButton } = useContext(MyContext);
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedMedicine, setSelectedMedicine] = useState(null);
     const [newMedicine, setNewMedicine] = useState({ name: '', count: '', dosage: '', price: '' });
@@ -197,7 +199,7 @@ const CreatePresciption = ({ onBack, prescription }) => {
                 <View>
                     <Text style={MyStyles.titleList}>Kê Toa Thuốc</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>

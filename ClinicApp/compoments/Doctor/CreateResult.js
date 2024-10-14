@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ImageBackground, Alert } from 'react-native';
 import HealthRecord from './HealthRecord.js';
 import styles from './styles.js';
@@ -13,8 +13,10 @@ import APIs, { authApi, endpoints } from '../../configs/APIs.js';
 import moment from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Prescription from '../Prescription/Presciptions.js';
+import { MyContext } from '../../App.js';
 
 const CreateResult = ({ route }) => {
+    const {renderCallButton } = useContext(MyContext);
     const { appointmentId } = route.params;
     const [detail, setDetail] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -127,7 +129,7 @@ const CreateResult = ({ route }) => {
                 <View>
                     <Text style={MyStyles.titleList}>Tạo Kết Quả Khám</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>

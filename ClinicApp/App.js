@@ -18,8 +18,8 @@ import RatingDetail from "./compoments/Doctor/RatingDetail";
 import MedicineList from "./compoments/Home/MedicineList";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { FontAwesome } from "@expo/vector-icons";
-import { Text } from "react-native";
-import { useContext, useEffect, useReducer, useState } from "react";
+import { Linking, Text } from "react-native";
+import { createContext, useContext, useEffect, useReducer, useState } from "react";
 import MyUserReducer from "./configs/Reducer";
 import Profile from "./compoments/user/Profile";
 import HealthRecord from "./compoments/Doctor/HealthRecord";
@@ -34,10 +34,41 @@ import InvoiceDetail from "./compoments/Invoice/InvoiceDetail";
 import NewDetail from "./compoments/Home/NewDetail";
 import ChatScreen from "./compoments/Chat/ChatSreen";
 import Payment from "./compoments/Invoice/Payment";
+import call from "react-native-phone-call";
+import { TouchableOpacity, Alert } from "react-native";
+import CartScreen from "./compoments/Home/CartScreen";
 
 
 const Stack = createStackNavigator();
+export const MyContext = createContext();
 
+const handleCall = () => {
+  const args = {
+    number: '0237967364', // Số điện thoại cần gọi
+    prompt: true // Hiển thị hộp thoại hỏi người dùng có muốn gọi không
+  };
+  call(args).catch(console.error);
+};
+
+const renderCallButton = () => {
+    Alert.alert(
+      "VítalCare Clinic",
+      "Có vấn đề cần được giải đáp?",
+      [
+        {
+          text: "Không",
+          style: "cancel",
+        },
+        {
+          text: "gọi",
+          onPress: () => {
+            handleCall();
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+}
 
 const MyStackMainPatient = () => {
   const user = useContext(MyUserContext);
@@ -59,8 +90,7 @@ const MyStackMainPatient = () => {
       <Stack.Screen name="InvoiceDetail" component={InvoiceDetail} />
       <Stack.Screen name="NewDetail" component={NewDetail} />
       <Stack.Screen name="Payment" component={Payment} />
-
-
+      <Stack.Screen name="CartScreen" component={CartScreen} />
     </Stack.Navigator>
   );
 }
@@ -238,10 +268,12 @@ const App = () => {
     <NavigationContainer>
       <MyUserContext.Provider value={user}>
         <MyDispatchContext.Provider value={dispatch}>
-          {user === null ?
-            <MyStackLogin /> :
-            <MyTab />
-          }
+          <MyContext.Provider value={{ handleCall, renderCallButton }}>
+            {user === null ?
+              <MyStackLogin /> :
+              <MyTab />
+            }
+          </MyContext.Provider>
         </MyDispatchContext.Provider>
       </MyUserContext.Provider>
 

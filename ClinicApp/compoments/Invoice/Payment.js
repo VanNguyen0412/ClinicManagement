@@ -3,7 +3,7 @@ import { FontAwesome } from "@expo/vector-icons";
 import MyStyles from "../../styles/MyStyles";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authApi, endpoints } from "../../configs/APIs";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import style from "../Notification/style";
 import { Modal } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
@@ -13,8 +13,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from "@react-navigation/native";
 import Invoice from "./Invoice";
 import styles from "../Forum/styles";
+import { MyContext } from "../../App";
 
 const Payment = ({ onBack, paymentId }) => {
+    const {renderCallButton } = useContext(MyContext);
     const [detail, setDetail] = useState(null)
     const [loading, setLoading] = useState(false);
     const [image, setImage] = useState(null);
@@ -23,7 +25,7 @@ const Payment = ({ onBack, paymentId }) => {
     const picker = async () => {
         let { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted')
-            Alert.alert("ĐĂNG KÝ", "Không tải được ảnh!");
+            Alert.alert("VítalCare Clinic", "Không tải được ảnh!");
         else {
             let res = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -52,8 +54,6 @@ const Payment = ({ onBack, paymentId }) => {
             const filename = image.uri.split("/").pop();
             const match = /\.(\w+)$/.exec(filename);
             const fileType = match ? `image/${match[1]}` : `image`;
-
-            // formData.append('image', image)
             if (image) {
                 formData.append('payment_proof', {
                     uri: image.uri,
@@ -61,16 +61,22 @@ const Payment = ({ onBack, paymentId }) => {
                     type: fileType
                 });
             }
-            
-            // formData.append('payment_method', "momo")
             let res = await authApi(token).post(endpoints['proof-payment'](paymentId), formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
             if (res.status === 200) {
-                Alert.alert("VítalCare Clinic", "Minh chứng thanh toán thành công")
-                nav.navigate("Home")
+                Alert.alert(
+                    "VítalCare Clinic", 
+                    "Minh chứng thanh toán thành công",
+                    [
+                        {
+                            text: "OK",
+                            onPress: () => onBack()
+                        }
+                    ]
+                );
                 
             } else if (res.status === 400) {
                 Alert.alert("VítalCare Clinic", "Thiếu thông tin. Hãy điền đủ thông tin yêu cầu.")
@@ -83,7 +89,7 @@ const Payment = ({ onBack, paymentId }) => {
         } finally {
             setLoading(false)
         }
-     }
+    }
 
 
     const loadInvoiceDetail = async () => {
@@ -117,7 +123,7 @@ const Payment = ({ onBack, paymentId }) => {
                 <View>
                     <Text style={MyStyles.titleList}>Thanh Toán Hóa Đơn</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>
@@ -136,7 +142,7 @@ const Payment = ({ onBack, paymentId }) => {
                     </View>
                 </Modal>
                 :
-                <ScrollView style={{padding: 15}}>
+                <ScrollView style={{ padding: 15 }}>
                     <View style={style.invoiceContainer}>
                         <View style={{ flex: 3 }}>
                             <Text style={style.text}>Tiền thuốc: </Text>
@@ -153,12 +159,12 @@ const Payment = ({ onBack, paymentId }) => {
                         </View>
                     </View>
                     <TouchableOpacity onPress={picker}>
-                            <Text style={styles.textAvatar}>{image ? 'Chọn lại hình ảnh' : 'Chọn hình ảnh'}</Text>
-                        </TouchableOpacity>
-                        {image && <Image source={{ uri: image.uri }} style={styles.image} />}
-                        <TouchableOpacity style={styles.buttonRecord} onPress={handleCreate}>
-                            <Text style={styles.buttonText}>Tạo mới</Text>
-                        </TouchableOpacity>
+                        <Text style={styles.textAvatar}>{image ? 'Chọn lại hình ảnh' : 'Chọn hình ảnh'}</Text>
+                    </TouchableOpacity>
+                    {image && <Image source={{ uri: image.uri }} style={styles.image} />}
+                    <TouchableOpacity style={styles.buttonRecord} onPress={handleCreate}>
+                        <Text style={styles.buttonText}>Thanh toán</Text>
+                    </TouchableOpacity>
                 </ScrollView>
             }
             {loading && (

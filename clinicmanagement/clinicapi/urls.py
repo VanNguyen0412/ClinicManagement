@@ -17,7 +17,8 @@ r.register('rating', views.RatingViewSet, 'rating')
 r.register('forum', views.ForumQuestionViewSet, 'forum')
 r.register('invoice', views.InvoiceViewSet, 'invoice')
 r.register(r'doctorRating', views.DoctorRatingViewSet, 'doctorRating')
-r.register(r'momo', views.MoMoViewSet, basename='momo')
+r.register(r'momo', views.MoMoViewSet, 'momo')
+r.register(r'cart', views.CartViewSet, 'cart')
 
 urlpatterns = [
     path('', include(r.urls)),

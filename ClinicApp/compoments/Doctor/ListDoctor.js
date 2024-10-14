@@ -8,8 +8,10 @@ import { MyUserContext } from '../../configs/Context';
 import APIs, { endpoints } from '../../configs/APIs';
 import { ActivityIndicator } from 'react-native-paper';
 import Doctor from './Doctor';
+import { MyContext } from '../../App';
 
 const ListDoctor = () => {
+    const {renderCallButton } = useContext(MyContext);
     const nav = useNavigation();
     const [doctors, setDoctor] = useState([]);
     const user1 = useContext(MyUserContext);
@@ -53,12 +55,8 @@ const ListDoctor = () => {
         try {
             let res = await APIs.get(endpoints['doctor'])
             setDoctor(res.data);
-            if (data.length > 0) {
-                setSelectedSpecialty(data[0].expertise);
-            }
-            console.info(selectedSpecialty)
-        } catch (ex) {
-            Alert.alert("VítalCare Clinic", "Bị lỗi loading.")
+        } catch (error) {
+            console.info(error.message)
         } finally {
             setLoading(false);
         }
@@ -86,8 +84,8 @@ const ListDoctor = () => {
                 <View>
                     <Text style={MyStyles.titleList}>Danh Sách Bác Sĩ</Text>
                 </View>
-                <TouchableOpacity>
-                    <FontAwesome name="filter" size={24} color="#835741" />
+                <TouchableOpacity onPress={() => renderCallButton()}>
+                    <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>
             <View style={styles.containerList}>
@@ -143,9 +141,7 @@ const ListDoctor = () => {
                             </View>
                         </TouchableOpacity>
                     ))}
-                    <TouchableOpacity>
-                        <Text style={MyStyles.bonusMore}>Xem thêm</Text>
-                    </TouchableOpacity>
+                    
                 </ScrollView>
                 {loading && (
                     <Modal

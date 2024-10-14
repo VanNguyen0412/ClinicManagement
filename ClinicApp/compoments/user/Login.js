@@ -106,7 +106,7 @@ const Login = ({ navigation, route }) => {
                     <TouchableOpacity >
                         <Text style={styleUser.linkText}>Quên mật khẩu</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity >
+                    <TouchableOpacity onPress={() => nav.navigate('Register')}>
                         <Text style={styleUser.linkText}>Đăng ký tài khoản</Text>
                     </TouchableOpacity>
                 </View>

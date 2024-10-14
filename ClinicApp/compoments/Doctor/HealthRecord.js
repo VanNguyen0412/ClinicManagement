@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, Image } from 'react-native';
 import styles from './styles.js';
 import MyStyles from '../../styles/MyStyles.js';
@@ -10,9 +10,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ActivityIndicator } from 'react-native-paper';
+import { MyContext } from '../../App.js';
 
 
 const HealthRecord = ({ patientId, onBack, patient }) => {
+    const {renderCallButton } = useContext(MyContext);
+
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -48,7 +51,7 @@ const HealthRecord = ({ patientId, onBack, patient }) => {
                 <View>
                     <Text style={MyStyles.titleList}>Hồ Sơ Khám Bệnh</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>

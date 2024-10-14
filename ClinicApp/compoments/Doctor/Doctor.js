@@ -12,8 +12,10 @@ import { ActivityIndicator, Avatar } from 'react-native-paper';
 import moment from 'moment';
 import { MyUserContext } from '../../configs/Context';
 import RatingDetail from './RatingDetail';
+import { MyContext } from '../../App';
 
 const Doctor = ({ doctor, onBack }) => {
+    const {renderCallButton } = useContext(MyContext);
     const [showMore, setShowMore] = useState(false);
     const nav = useNavigation();
     const [loading, setLoading] = useState(false);
@@ -94,7 +96,7 @@ const Doctor = ({ doctor, onBack }) => {
                 <View>
                     <Text style={MyStyles.titleList}>Thông Tin Bác Sĩ</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>

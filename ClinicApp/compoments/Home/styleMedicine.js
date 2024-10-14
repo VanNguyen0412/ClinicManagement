@@ -28,7 +28,7 @@ export default StyleSheet.create({
     },
     details: {
         flex: 1,
-        marginLeft: 10,
+        
     },
     name: {
         fontSize: 15,
@@ -145,6 +145,23 @@ export default StyleSheet.create({
         fontSize: 16, 
         marginBottom: 7, 
         fontWeight: '700'
-    }
+    },
+    cartBadge: {
+        position: 'absolute',
+        top: -5,
+        right: -10,
+        backgroundColor: '#FF6347',
+        borderRadius: 10,
+        padding: 5,
+        minWidth: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    cartBadgeText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: 'bold',
+        fontFamily: 'serif'
+    },
     
 })

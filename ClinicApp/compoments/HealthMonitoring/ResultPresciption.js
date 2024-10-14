@@ -2,7 +2,7 @@ import { View, Text, Alert } from "react-native";
 import MyStyles from "../../styles/MyStyles";
 import { TouchableOpacity } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import styles from "../Patient/styles";
 import { ActivityIndicator, SegmentedButtons } from "react-native-paper";
 import { ScrollView } from "react-native";
@@ -11,8 +11,11 @@ import { authApi, endpoints } from "../../configs/APIs";
 import moment from "moment";
 import { Modal } from "react-native";
 import { Image } from "react-native";
+import { MyContext } from "../../App";
 
 const ResultPrescription = ({ onBack }) => {
+    const {renderCallButton } = useContext(MyContext);
+
     const [value, setValue] = useState('done');
     const [result, setResult] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -53,7 +56,7 @@ const ResultPrescription = ({ onBack }) => {
                 <View>
                     <Text style={MyStyles.titleList}>Kết Quả Khám Bệnh</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>

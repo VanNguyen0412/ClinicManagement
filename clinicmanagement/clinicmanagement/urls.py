@@ -20,13 +20,16 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from clinicapi.admin import admin_site
-from clinicapi.views import RemoveAnswer
+from clinicapi.views import RemoveAnswer, RemoveCart
 
 remove_answer = RemoveAnswer.as_view({
     'delete': 'destroy',
 })
 update_answer = RemoveAnswer.as_view({
     'patch': 'partial_update',
+})
+remove_cart = RemoveCart.as_view({
+    'delete': 'destroy',
 })
 
 schema_view = get_schema_view(
@@ -59,6 +62,8 @@ urlpatterns = [
          name='remove_answer_from_question'),
     path('forum/<int:question>/answer/<int:answer>/update/', update_answer,
          name='update_answer_from_question'),
+    path('cart/item/<int:item_id>/', remove_cart,
+         name='remove_item_from_cart'),
     # path('momo/payment/<int:invoice_id>/', momo_payment_request, name='momo_payment_request'),
 
 ]

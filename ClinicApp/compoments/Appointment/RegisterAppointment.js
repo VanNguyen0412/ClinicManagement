@@ -1,5 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { View, Text, Image, TextInput, StyleSheet, ScrollView, ImageBackground,
      Animated, Dimensions, TouchableOpacity, 
      FlatList} from 'react-native';
@@ -13,8 +13,10 @@ import APIs, { authApi, endpoints } from "../../configs/APIs";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
+import { MyContext } from "../../App";
 
 const RegisterAppointment = () => {
+    const {renderCallButton } = useContext(MyContext);
     const nav = useNavigation();
     const [show, setShow] = useState(false);
     const [date, setDate] = useState(new Date());
@@ -142,7 +144,7 @@ const RegisterAppointment = () => {
             <View>
             <Text style={MyStyles.titleList}>Đăng Ký Lịch Khám</Text>
             </View>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => renderCallButton()}>
             <FontAwesome name="phone" size={24} color="#835741" />
             </TouchableOpacity>
         </View>

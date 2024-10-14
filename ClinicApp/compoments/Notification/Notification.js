@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import NotificationDetail from './NotificationDetail';
 import { ScrollView } from 'react-native';
 import style from './style';
+import { MyContext } from '../../App';
 
 const Notification = () => {
     const [notifications, setNotications] = useState([]);
@@ -21,7 +22,7 @@ const Notification = () => {
     const [refreshing, setRefreshing] = useState(false); // Trạng thái refresh
     const [show, setShow] = useState(false);
     const [noti, setNoti] = useState();
-
+    const {renderCallButton } = useContext(MyContext);
 
 
     const getType = (type) => {
@@ -133,7 +134,7 @@ const Notification = () => {
                 <View>
                     <Text style={[MyStyles.titleList]}>Thông báo</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>

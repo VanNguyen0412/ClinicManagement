@@ -23,8 +23,6 @@ from .perms import *
 from .paginators import *
 from django.utils import timezone
 from datetime import timedelta
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
 import json
 from django.http import JsonResponse
 import hashlib
@@ -88,17 +86,11 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView
     def create_user(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        # Lưu user tạm thời nhưng chưa kích hoạt
         user = serializer.save(is_active=False)
 
         # Tạo mã OTP
         otp_code = random.randint(100000, 999999)
-
-        # Lưu mã OTP vào cơ sở dữ liệu hoặc sử dụng một mô hình OTPVerification
         OTPVerification.objects.create(user=user, otp_code=otp_code)
-
-        # Gửi email chứa mã OTP
         send_mail(
             'Xác nhận tài khoản của bạn',
             f'Mã OTP của bạn là: {otp_code}',
@@ -114,7 +106,6 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView
 
     @action(methods=['post'], detail=False, url_path='verify-otp')
     def verify_otp(self, request, pk=None):
-        # Lấy usename và mã OTP từ request
         username = request.data.get('username')
         otp_code = request.data.get('otp')
         if not otp_code or not username:
@@ -123,17 +114,12 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView
                 status=status.HTTP_400_BAD_REQUEST
             )
         try:
-            # Tìm user bằng email
             user = User.objects.get(username=username)
 
-            # Tìm mã OTP trong cơ sở dữ liệu
             otp_record = OTPVerification.objects.get(user=user, otp_code=otp_code)
 
-            # Nếu tìm thấy mã OTP hợp lệ, kích hoạt tài khoản
             user.is_active = True
             user.save()
-
-            # Xóa mã OTP sau khi xác nhận thành công
             otp_record.delete()
 
             return Response(
@@ -261,32 +247,22 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
     @action(methods=['get'], url_path='invoice_done', detail=True)
     def get_invoice_done(self, request, pk=None):
         patient = self.get_object()
-        # Kiểm tra xem bệnh nhân đã hoàn tất cuộc hẹn với toa thuốc chưa
-        prescriptions = Prescription.objects.filter(
-            appointment__patient=patient
-        )
-
-
-        for prescription in prescriptions:
-            invoice = Invoice.objects.filter(prescription=prescription, is_paid=True)
-            serializer = InvoiceDetailSerializer(invoice, many=True)
+        prescriptions = Prescription.objects.filter(appointment__patient=patient)
+        invoices = Invoice.objects.filter(prescription__in=prescriptions, is_paid=True)
+        if invoices.exists():
+            serializer = InvoiceDetailSerializer(invoices, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response({'detail': []},
-                        status=status.HTTP_404_NOT_FOUND)
+        return Response({'detail': 'Không có hóa đơn'}, status=status.HTTP_404_NOT_FOUND)
 
     @action(methods=['get'], url_path='invoice', detail=True)
     def get_invoice(self, request, pk=None):
         patient = self.get_object()
-        # Kiểm tra xem bệnh nhân đã hoàn tất cuộc hẹn với toa thuốc chưa
-
-        prescriptions = Prescription.objects.filter(
-            appointment__patient=patient
-        )
-        for prescription in prescriptions:
-            invoice = Invoice.objects.filter(prescription=prescription, is_paid=False)
-            serializer = InvoiceDetailSerializer(invoice, many=True)
+        prescriptions = Prescription.objects.filter(appointment__patient=patient)
+        unpaid_invoices = Invoice.objects.filter(prescription__in=prescriptions,is_paid=False)
+        if unpaid_invoices.exists():
+            serializer = InvoiceDetailSerializer(unpaid_invoices, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response({'detail': []}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'detail': 'Không có hóa đơn'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -295,30 +271,16 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
     permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
-        if self.action in ['create_doctor', 'update_doctor']:
+        if self.action in ['update_doctor']:
             return [DoctorOwner()]
         elif self.action in ['create_rating']:
             return [PatientOwner()]
         return [permissions.AllowAny()]
 
     @action(methods=['get'], url_path='current', detail=False)
-    def get_nurse(self, request, pk=None):
+    def get_doctor(self, request, pk=None):
         doctor = Doctor.objects.get(user_id=request.user.id)
         return Response(DoctorSerializer(doctor).data, status=status.HTTP_200_OK)
-
-    @action(methods=['post'], url_path='create', detail=False)
-    def create_doctor(self, request, pk=None):
-        user_id = request.user.id
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return Response({"error": "User does not exist", "user": user_id}, status=status.HTTP_400_BAD_REQUEST)
-        data = request.data.copy()
-        data['user'] = user_id
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=['patch'], url_path='update', detail=True)
     def update_doctor(self, request, pk=None):
@@ -337,14 +299,9 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
         doctor = self.get_object()
         rating = Rating.objects.filter(doctor_id=doctor)
 
-        # Áp dụng phân trang
         paginator = RatingPaginator()
         paginated_ratings = paginator.paginate_queryset(rating, request)
-
-        # Sử dụng serializer với dữ liệu đã phân trang
         serializer = RatingDetailSerializer(paginated_ratings, many=True)
-
-        # Trả về dữ liệu phân trang
         return paginator.get_paginated_response(serializer.data)
 
     @action(methods=['get'], url_path='ratingall', detail=True)
@@ -356,9 +313,7 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
 
     @action(methods=['post'], url_path='create_rating', detail=True)
     def create_rating(self, request, pk=None):
-        user_id = request.user.id
-        patient = Patient.objects.get(user_id=user_id)
-
+        patient = Patient.objects.get(user_id=request.user.id)
         doctor = self.get_object()
 
         # Kiểm tra xem bệnh nhân đã hoàn tất cuộc hẹn với toa thuốc chưa
@@ -373,20 +328,18 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
                  "doctor": DoctorSerializer(doctor).data},  # Serialize doctor here
                 status=status.HTTP_403_FORBIDDEN)
 
-        # If the patient has a prescription, proceed to create the rating
         data = request.data.copy()
         data['patient'] = patient.id
         data['doctor'] = doctor.id
         serializer = RatingSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=['get'], url_path='name', detail=False)
     def get_doctor_name(self, request):
-        doctors = self.get_queryset()  # Lấy toàn bộ danh sách bác sĩ
-        serializer = DoctorNameSerializer(doctors, many=True)  # Serialize danh sách
+        doctors = self.get_queryset()
+        serializer = DoctorNameSerializer(doctors, many=True)
         return Response(serializer.data)
 
 
@@ -635,7 +588,7 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
             return [DoctorPermission()]
         elif self.action in ['create_invoice', 'info']:
             return [PaymentNursePermission()]
-        elif self.action in ['get_result_prescription', 'require_receipt']:
+        elif self.action in ['get_result_prescription', 'require_receipt', 'get_invoice_prescription']:
             return [PatientOwner()]
         return [permissions.AllowAny()]
 
@@ -647,7 +600,6 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
             return Response({"error": "Appointment ID is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Filter prescriptions by the given appointment ID and check for null PrescriptionMedicine
             prescriptions_without_medicine = Prescription.objects.filter(
                 prescriptionmedicine__isnull=True,
                 appointment_id=appointment_id
@@ -666,6 +618,7 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         data = request.data.copy()
         data['prescription'] = prescription.id
         data['total_price'] = total_price
+        data['invoice_type'] = Invoice.INVOICE_TYPE.PRESCRIPTION
 
         if medicines:
             notification_content = f"""Y tá đã tạo hóa đơn thành công cho bạn."""
@@ -713,9 +666,8 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         prescription = self.get_object()
         medicines = PrescriptionMedicine.objects.filter(prescription=prescription)
         serializer = PresciptMedicineSerializer(medicines, many=True)
-        # tạo thông báo kết quả cho bệnh nhân
+
         if prescription.doctor.id == doctor.id:
-            # Tạo thông báo về kết quả khám
             notification_content = \
                 f"""Kết quả khám bệnh của bạn."""
             Notification.objects.create(
@@ -741,21 +693,26 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retri
         patients = Patient.objects.get(user=request.user)
         prescriptions = Prescription.objects.filter(appointment__patient=patients)
 
-        for prescription in prescriptions:
-            has_invoice = Invoice.objects.filter(prescription=prescription).exists()
-
         serializer = PrescriptionSerializer(prescriptions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], url_path='result_invoice', detail=False)
+    def get_invoice_prescription(self, request, pk=None):
+        patients = Patient.objects.get(user=request.user)
+        prescriptions = Prescription.objects.filter(appointment__patient=patients)
+        no_invoice = prescriptions.filter(invoice__isnull=True)
+
+        serializer = PrescriptionSerializer(no_invoice, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(methods=['post'], url_path='require', detail=True)
     def require_receipt(self, request, pk=None):
         prescription = self.get_object()
         patient = Patient.objects.get(user=request.user)
-        # prescription = Prescription.objects.get(id=prescription_id.id)
 
         nurse = Nurse.objects.get(position='payment_nurse')
-        has_prescription = Prescription.objects.filter(
-            appointment__patient=patient
+        has_prescription = PrescriptionMedicine.objects.filter(
+            prescription=prescription
         ).exists()
 
         if has_prescription:
@@ -823,7 +780,6 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Destr
                 return Response(appointment_serializer.data, status=status.HTTP_200_OK)
             return Response({"error": "No appointment found"}, status=status.HTTP_404_NOT_FOUND)
 
-            # Nếu thông báo là về phiếu khám chung
         elif notification.type == Notification.Type.GENERAL:
             try:
                 prescription = Prescription.objects.get(id=notification.prescription.id)
@@ -831,11 +787,9 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Destr
                 return Response(prescription_serializer.data, status=status.HTTP_200_OK)
             except Prescription.DoesNotExist:
                 return Response({"error": "No prescription found for this appointment"},
-                                    status=status.HTTP_404_NOT_FOUND)
+                                status=status.HTTP_404_NOT_FOUND)
 
-            # Nếu thông báo là về thuốc (medicine)
         elif notification.type == Notification.Type.MEDICINE:
-            # Tìm thuốc dựa trên bệnh nhân và cuộc hẹn gần nhất
             try:
                 prescription = Prescription.objects.get(id=notification.prescription.id)
                 if prescription:
@@ -852,10 +806,7 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Destr
         notification = self.get_object()
 
         if notification.type == Notification.Type.MEDICINE:
-            # Tìm thuốc dựa trên bệnh nhân và cuộc hẹn gần nhất
-
             try:
-                # Giả định có model Medicine liên kết với Appointment
                 prescription = Prescription.objects.get(id=notification.prescription.id)
                 if prescription:
                     medicines = PrescriptionMedicine.objects.filter(prescription=prescription)
@@ -989,8 +940,6 @@ class MedicineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveA
     queryset = Medicine.objects.all()
     serializer_class = MedicineSerializer
 
-    # pagination_class = ItemPaginator
-
     @action(methods=['get'], url_path='functional', detail=False)
     def get_functional_food(self, request):
         medicines = Medicine.objects.filter(type='Thực phẩm chức năng')
@@ -1007,8 +956,7 @@ class MedicineViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveA
 class RatingViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = Rating.objects.all()
     serializer_class = RatingSerializer
-
-    # permission_classes = [PatientOwner()]
+    permission_classes = [PatientOwner()]
 
     @action(methods=['patch'], url_path='update_rating', detail=True)
     def update_rating(self, request, pk=None):
@@ -1024,7 +972,6 @@ class RatingViewSet(viewsets.ViewSet, generics.ListAPIView):
             return Response({"error": "Đánh giá này không tồn tại hoặc bạn không có quyền chỉnh sửa."},
                             status=status.HTTP_404_NOT_FOUND)
 
-            # Cập nhật đánh giá
         serializer = RatingSerializer(rating, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -1163,39 +1110,28 @@ class InvoiceViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
     @action(methods=['post'], url_path='upload_payment_proof', detail=True)
     def upload_payment_proof(self, request, pk=None):
         invoice = self.get_object()
-
-        # Kiểm tra nếu đã có hình minh chứng trước đó
         if invoice.payment_proof:
             return Response({
                 "error": "Payment proof has already been uploaded. You cannot upload it again."
             }, status=status.HTTP_400_BAD_REQUEST)
 
         payment_method = Invoice.PAYMENT_CHOICES.MOMO
-        payment_proof = request.FILES.get('payment_proof')  # Giả định file tải lên nằm trong FILES
-
-        # Kiểm tra phương thức thanh toán và hình minh chứng
+        payment_proof = request.FILES.get('payment_proof')
         if not payment_method or not payment_proof:
             return Response({"error": "Missing payment_method or payment_proof"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Cập nhật hóa đơn
         invoice.payment_method = payment_method
         invoice.payment_proof = payment_proof
         price = invoice.total_price + invoice.consultation_fee
         invoice.is_paid = True
         invoice.save()
-
-        # Tạo bản ghi Payment
-        payment = Payment.objects.create(
+        Payment.objects.create(
             invoice=invoice,
             payment_method=payment_method,
             amount=price
         )
 
-        # Trả về phản hồi thành công
         return Response({
             "message": "Payment proof uploaded successfully"}, status=status.HTTP_200_OK)
-
-    # @action(methods=['get'], url_path='')
 
 
 class DoctorRatingViewSet(viewsets.ReadOnlyModelViewSet):
@@ -1310,8 +1246,6 @@ class MoMoViewSet(viewsets.ViewSet):
                 "requestType": request_type,
                 "signature": signature
             }
-
-            # Gửi dữ liệu dưới dạng JSON
             response = external_requests.post(endpoint, json=data, headers={"Content-Type": "application/json"})
             if response.status_code == 200:
                 payUrl = response.json().get('payUrl')
@@ -1352,3 +1286,95 @@ class MoMoViewSet(viewsets.ViewSet):
 
         except Exception as e:
             return Response({'message': f'Có lỗi xảy ra: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CartViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
+    queryset = Cart.objects.all()
+    serializer_class = CartSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['create', 'create_invoice', 'get_items']:
+            return [PatientOwner()]
+        return [permissions.AllowAny()]
+
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        medicine_id = request.data.get('medicine_id')
+        quantity = request.data.get('quantity', 1)
+
+        try:
+            medicine = Medicine.objects.get(id=medicine_id)
+        except Medicine.DoesNotExist:
+            return Response({"error": "Medicine not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        cart, created = Cart.objects.get_or_create(user=user)
+
+        # Add medicine to cart
+        cart_item, created = CartItem.objects.get_or_create(cart=cart, medicine=medicine)
+
+        if created:
+            cart_item.quantity = quantity
+        else:
+            cart_item.quantity += quantity
+
+        cart_item.save()
+
+        return Response({"message": "Medicine added to cart successfully"},
+                        status=status.HTTP_200_OK)
+
+    @action(methods=['post'], url_path='invoice', detail=False)
+    def create_invoice(self, request, *args, **kwargs):
+        user = request.user
+
+        try:
+            cart = Cart.objects.get(user=user)
+        except Cart.DoesNotExist:
+            return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+
+        cart_items = CartItem.objects.filter(cart=cart)
+        if not cart_items.exists():
+            return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+
+        total_price = sum(item.get_total_price() for item in cart_items)
+        consultation_fee = 0
+        # Create Invoice
+        invoice = Invoice.objects.create(
+            total_price=total_price,
+            consultation_fee=consultation_fee,
+            invoice_type=Invoice.INVOICE_TYPE.MEDICINE
+        )
+        cart_items.delete()
+
+        return Response({
+            "message": "Payment successful",
+            "invoice_id": invoice.id,
+            "total_price": total_price,
+        }, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], url_path='items', detail=False)
+    def get_items(self, request, pk=None):
+        cart = Cart.objects.get(user=request.user)
+        items = CartItem.objects.filter(cart=cart)
+        serializer = CartItemSerializer(items, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class RemoveCart(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def destroy(self, request, item_id=None):
+        try:
+            cart = Cart.objects.get(user=request.user)
+            item = CartItem.objects.get(cart=cart, id=item_id)
+
+            if item:
+                item.delete()
+                return Response({"detail": "Đã xóa sản phẩm khỏi giỏ hàng."},
+                                status=status.HTTP_200_OK)
+            else:
+                return Response({"detail": "Không tìm thấy sản phẩm."}, status=status.HTTP_404_NOT_FOUND)
+        except Cart.DoesNotExist:
+            return Response({"detail": "Không tìm thấy giỏ hàng."}, status=status.HTTP_404_NOT_FOUND)
+        except CartItem.DoesNotExist:
+            return Response({"detail": "Không tìm thấy sản phẩm."}, status=status.HTTP_404_NOT_FOUND)

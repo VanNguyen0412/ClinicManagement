@@ -10,20 +10,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authApi, endpoints } from '../../configs/APIs';
 import { Modal } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
-
-const article =
-{
-    content: 'Cao huyết áp (hay tăng huyết áp) là một bệnh lý mãn tính khi áp lực của máu tác động lên thành động mạch tăng cao...',
-    created_date: '2024-09-18T07:57:58.593551Z',
-    id: 4,
-    image: 'http://res.cloudinary.com/dr9h3ttpy/image/upload/v1726646280/xw3lkt0cbjmalrmlmgct.jpg',
-    title: 'Cao huyết áp: Triệu chứng, nguyên nhân và cách điều trị',
-};
-
-
+import { MyContext } from '../../App';
 
 const NewDetail = ({ route }) => {
     const { id } = route.params;
+    const {renderCallButton } = useContext(MyContext);
+
     const user = useContext(MyUserContext)
     const nav = useNavigation()
     const [detail, setDetail] = useState(null);
@@ -67,7 +59,7 @@ const NewDetail = ({ route }) => {
                 <View>
                     <Text style={MyStyles.titleList}>Chi Tiết Tin Tức</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => renderCallButton()}>
                     <FontAwesome name="phone" size={24} color="#835741" />
                 </TouchableOpacity>
             </View>
