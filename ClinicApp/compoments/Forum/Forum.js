@@ -93,7 +93,7 @@ const Forum = () => {
                 loadForumData();
                 // handleDismissMenu(forumId)
             } else if (res.status === 400) {
-                Alert.alert("Error", "Xóa diễn đàn bị lỗi. Bạn không có quyền xóa diễn đàn này.");
+                Alert.alert("VítalCare Clinic", "Xóa diễn đàn bị lỗi. Bạn không có quyền xóa diễn đàn này.");
             }
         } catch (error) {
             console.error(error)
@@ -147,7 +147,7 @@ const Forum = () => {
     const picker = async () => {
         let { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted')
-            Alert.alert("ĐĂNG KÝ", "Không tải được ảnh!");
+            Alert.alert("VítalCare Clinic", "Không tải được ảnh!");
         else {
             let res = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,

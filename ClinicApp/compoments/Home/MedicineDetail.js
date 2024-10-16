@@ -18,8 +18,10 @@ const MedicineDetail = ({ medicine, onBack }) => {
                 return 'Đơn vị đóng gói: Vỉ';
             case 'Chai':
                 return 'Dạng bào chế: Dung dịch/Siro';
+            case 'Gói':
+                return 'Đơn vị đóng gói: Gói';
             default:
-                return method;
+                return unit;
         }
     };
 

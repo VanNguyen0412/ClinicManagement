@@ -30,22 +30,7 @@ const CreatePatient = () => {
     const [date, setDate] = useState(new Date());
     const [loading, setLoading] = useState(false);
     const user = useContext(MyUserContext)
-    const [patient, setPatient] = useState([]);
-
-    // const getPatient = async () => {
-    //     try{
-    //         let url = `${endpoints['current-patient']}?user=${user.id}`;
-    //         const res = await APIs.get(url)
-    //         setPatient(res.data)
-    //     }catch(ex){
-    //         Alert.alert("TVítalCare Clinic", "Bị lỗi loading.")
-    //     }
-    // }
-
-    // useEffect(()=>{
-    //     getPatient();
-    // },[user])
-
+    
     const handleDone = async () => {
         if (!first_name || !last_name || !birthdate || !address || !gender || !phone) {
             Alert.alert("VítalCare Clinic", "Thiếu thông tin. Hãy điền đủ thông tin yêu cầu.")

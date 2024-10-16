@@ -30,7 +30,7 @@ const Profile = () => {
         }
       } catch (ex) {
         console.info(ex)
-        Alert.alert("Thông báo", "Bị lỗi loading.")
+        Alert.alert("VítalCare Clinic", "Bị lỗi loading.")
 
       }
     }

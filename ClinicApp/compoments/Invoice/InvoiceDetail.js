@@ -50,7 +50,7 @@ const InvoiceDetail = ({ route }) => {
         try {
             const token = await AsyncStorage.getItem("token");
             if (!token) {
-                Alert.alert("Error", "No access token found.");
+                Alert.alert("VítalCare Clinic", "No access token found.");
                 return;
             }
             let res = await authApi(token).get(endpoints['invoice-detail'](invoiceId))
@@ -72,7 +72,7 @@ const InvoiceDetail = ({ route }) => {
             }
             // console.info(patient)
         } catch (ex) {
-            Alert.alert("Trang chủ", "Bị lỗi loading.")
+            Alert.alert("VítalCare Clinic", "Bị lỗi loading.")
         }
     }
 

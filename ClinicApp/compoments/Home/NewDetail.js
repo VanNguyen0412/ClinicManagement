@@ -78,13 +78,14 @@ const NewDetail = ({ route }) => {
                             <ActivityIndicator size="small" color="#ffffff" />
                         </View>
                     </Modal> :
-                    <View>
+                    <View style={{padding: 10}}>
                         <Image source={{ uri: detail.image }} style={styles.image} />
                         <Text style={styles.title}>{detail.title}</Text>
                         <Text style={styles.content}>{detail.content}</Text>
                         <Image source={{ uri: detail.image2 }} style={styles.image} />
                         <Text style={styles.content}>{detail.content2}</Text>
                         <Image source={{ uri: detail.image3 }} style={styles.image} />
+                        <Text style={styles.date}>yanghara</Text>
                         <Text style={styles.date}>{new Date(detail.created_date).toLocaleDateString()}</Text>
                     </View>
                 }

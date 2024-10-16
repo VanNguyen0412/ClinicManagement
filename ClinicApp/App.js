@@ -276,8 +276,6 @@ const App = () => {
           </MyContext.Provider>
         </MyDispatchContext.Provider>
       </MyUserContext.Provider>
-
-
     </NavigationContainer>
   );
 }

@@ -31,7 +31,7 @@ const CartScreen = () => {
             setCartItems(res.data);
             // console.info(res.data)
         } catch (error) {
-            Alert.alert("Lỗi", "Không thể tải giỏ hàng");
+            Alert.alert("VítalCare Clinic", "Không thể tải giỏ hàng");
         }
     };
 
@@ -40,7 +40,7 @@ const CartScreen = () => {
     }, [user]);
 
     const deleteItem = async (item) => {
-        setLoading()
+        setLoading(true)
         try {
             const token = await AsyncStorage.getItem("token");
 
@@ -73,7 +73,7 @@ const CartScreen = () => {
             }
             let res = await authApi(token).post(endpoints['cart-invoice']);
             if( res.status === 200){
-                Alert.alert("Thành công", "Thanh toán thành công",
+                Alert.alert("VítalCare Clinic", "Thanh toán thành công",
                     [
                         {
                           text: "Không",
@@ -91,7 +91,7 @@ const CartScreen = () => {
                 setCartItems([]);  // Xóa giỏ hàng sau khi thanh toán
             }
         } catch (error) {
-            Alert.alert("Lỗi", "Không thể thanh toán");
+            Alert.alert("VítalCare Clinic", "Không thể thanh toán");
         }
     };
 
@@ -115,14 +115,14 @@ const CartScreen = () => {
                         <DataTable.Title style={style.tableTitle1}>Tên Thuốc</DataTable.Title>
                         <DataTable.Title style={style.tableTitle3}>SL</DataTable.Title>
                         <DataTable.Title style={style.tableTitle2}>Giá</DataTable.Title>
-                        <DataTable.Title style={{ flerror: 0.5 }}></DataTable.Title>
+                        <DataTable.Title style={{ flex: 0.5 }}></DataTable.Title>
                     </DataTable.Header>
                     {cartItems.map((medicine) => (
                         <DataTable.Row key={medicine.id} style={style.tableRow}>
                             <DataTable.Cell style={style.tableTitle1}>{medicine.medicine.name}</DataTable.Cell>
                             <DataTable.Cell style={style.tableCell3}>{medicine.quantity}</DataTable.Cell>
                             <DataTable.Cell style={style.tableTitle2}>{medicine.get_total_price}</DataTable.Cell>
-                            <DataTable.Cell style={{ flerror: 0.5 }}>
+                            <DataTable.Cell style={{ flex: 0.5 }}>
                                 <FontAwesome
                                     name="trash-o"
                                     size={15}

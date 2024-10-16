@@ -15,7 +15,6 @@ import { MyContext } from "../../App";
 
 const ResultPrescription = ({ onBack }) => {
     const {renderCallButton } = useContext(MyContext);
-
     const [value, setValue] = useState('done');
     const [result, setResult] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -73,7 +72,6 @@ const ResultPrescription = ({ onBack }) => {
                             value: 'notyet',
                             label: 'Lịch hẹn chưa hoàn thành',
                         },
-
                     ]}
                 />
                 {value === 'done' && (

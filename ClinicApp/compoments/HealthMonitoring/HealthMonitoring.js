@@ -14,7 +14,6 @@ import { MyContext } from "../../App";
 
 const HealthMonitoring = () => {
     const {renderCallButton } = useContext(MyContext);
-
     const nav = useNavigation();
     const [bloodPressure, setBloodPressure] = useState({});
     const [days, setDays] = useState([]);

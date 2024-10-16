@@ -117,7 +117,7 @@ const Register = () => {
                             style={styleUser.textInput}
                         />
                         <TouchableOpacity>
-                            <FontAwesome name={f.icon1} size={25} color="#835741" />
+                            <FontAwesome name={f.icon1} size={23} color="#835741" />
                         </TouchableOpacity>
                     </View>
                 ))}

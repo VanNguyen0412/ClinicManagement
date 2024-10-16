@@ -36,7 +36,7 @@ const Prescription = ({ onBack, appointmentId }) => {
             setSelectedPre(res.data)
             
         }catch(ex){
-            Alert.alert("Thông báo", "Loading thông tin bác sĩ lỗi.")
+            Alert.alert("VítalCare Clinic", "Loading thông tin bác sĩ lỗi.")
         }finally{
             setLoading(false);
         }

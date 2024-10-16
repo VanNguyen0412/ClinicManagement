@@ -151,5 +151,13 @@ export default StyleSheet.create({
         marginLeft: 10,
         marginRight: 10,
         fontFamily: 'serif'
+    },
+    image: {
+        width:100,
+        height: 100,
+        borderRadius: 10,
+        borderWidth: 0.5,
+        borderColor: '#835741',
+        marginBottom: 10
     }
 })

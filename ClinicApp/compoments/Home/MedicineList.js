@@ -16,6 +16,7 @@ import { MyContext } from "../../App";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const MedicineList = () => {
+    const { renderCallButton } = useContext(MyContext);
     const [show, setShow] = useState(false);
     const nav = useNavigation()
     const [selectedMedicine, setSelectedMedicine] = useState(null);
@@ -25,13 +26,13 @@ const MedicineList = () => {
     const [more, setMore] = useState(true);
     const [loading, setLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
-    const [quantity, setQuantity] = useState(1);  // New state for medicine quantity
+    const [quantity, setQuantity] = useState(1); 
     const [cartCount, setCartCount] = useState(0);
     const [cartItems, setCartItems] = useState([]);
 
     const openQuantityModal = (medicine) => {
         setSelectedMedicine(medicine);
-        setQuantity(1); // Reset quantity to 1
+        setQuantity(1); 
         setModalVisible(true);
     };
 
@@ -57,9 +58,9 @@ const MedicineList = () => {
                 setCartItems(res.data);
                 const totalQuantity = res.data.reduce((total, item) => total + item.quantity, 0);
                 setCartCount(totalQuantity);
-                
+
             } catch (error) {
-                Alert.alert("Lỗi", "Không thể tải giỏ hàng");
+                Alert.alert("VítalCare Clinic", "Không thể tải giỏ hàng");
             }
         };
 
@@ -72,7 +73,7 @@ const MedicineList = () => {
             let url = `${endpoints['medicine']}?page=${page}`;
             let res = await APIs.get(url)
             if (res.data.next === null) {
-                setPage(1);
+                setPage(0);
                 setMore(false);
             }
             if (page === 1) {
@@ -119,12 +120,12 @@ const MedicineList = () => {
             }
             let res = await authApi(token).post(endpoints['cart'], {
                 medicine_id: selectedMedicine.id,
-                quantity: quantity  // Use selected quantity
+                quantity: quantity  
             });
             if (res.status === 200) {
-                Alert.alert("VítalCare Clinic", "Thuốc đã được thêm vào giỏ hàng");
-                setCartCount(prevCount => prevCount + quantity);  // Update cart count
-                setModalVisible(false);  // Close the modal after adding to cart
+                Alert.alert("VítalCare Clinic", "Thuốc đã được thêm vào giỏ hàng.");
+                setCartCount(prevCount => prevCount + quantity);  
+                setModalVisible(false);  
             }
 
         } catch (error) {
@@ -137,35 +138,47 @@ const MedicineList = () => {
     }
 
     const adjustQuantity = (change) => {
-        setQuantity(prevQuantity => Math.max(1, prevQuantity + change));  // Ensure minimum quantity is 1
+        setQuantity(prevQuantity => Math.max(1, prevQuantity + change)); 
     };
 
     return (
         <View style={{ marginBottom: 30 }}>
-            <View style={MyStyles.headerList}>
-                {user.role === 'patient' ?
+            {user.role === 'patient' ?
+                <View style={MyStyles.headerList}>
                     <TouchableOpacity onPress={() => nav.navigate("Home")}>
                         <FontAwesome name="arrow-left" size={24} color="#835741" />
                     </TouchableOpacity>
-                    :
+
+                    <View>
+                        <Text style={MyStyles.titleList}>Thực Phẩm Chức Năng</Text>
+                    </View>
+
+                    <TouchableOpacity onPress={() => nav.navigate("CartScreen")}>
+                        <View style={{ position: "relative" }}>
+                            <FontAwesome name="cart-plus" size={24} color="#835741" />
+                            {cartCount >= 0 && (
+                                <View style={styleMedicine.cartBadge}>
+                                    <Text style={styleMedicine.cartBadgeText}>{cartCount}</Text>
+                                </View>
+                            )}
+                        </View>
+                    </TouchableOpacity>
+                </View>
+                :
+                <View style={MyStyles.headerList}>
                     <TouchableOpacity onPress={() => nav.navigate("HomeDoctor")}>
                         <FontAwesome name="arrow-left" size={24} color="#835741" />
                     </TouchableOpacity>
-                }
-                <View>
-                    <Text style={MyStyles.titleList}>Thực Phẩm Chức Năng</Text>
-                </View>
-                <TouchableOpacity onPress={() => nav.navigate("CartScreen")}>
-                    <View style={{ position: "relative" }}>
-                        <FontAwesome name="cart-plus" size={24} color="#835741" />
-                        {cartCount >= 0 && (
-                            <View style={styleMedicine.cartBadge}>
-                                <Text style={styleMedicine.cartBadgeText}>{cartCount}</Text>
-                            </View>
-                        )}
+
+                    <View>
+                        <Text style={MyStyles.titleList}>Thực Phẩm Chức Năng</Text>
                     </View>
-                </TouchableOpacity>
-            </View>
+
+                    <TouchableOpacity onPress={() => renderCallButton()}>
+                        <FontAwesome name="phone" size={24} color="#835741" />
+                    </TouchableOpacity>
+                </View>
+            }
             <View style={styleMedicine.searchContainerList}>
                 <TextInput
                     style={styleMedicine.searchInputList}
@@ -189,11 +202,12 @@ const MedicineList = () => {
                                     <FontAwesome name="info-circle" size={20} color='#835741' />
                                     <Text style={styleMedicine.type}>Chi tiết</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={{ flexDirection: 'row', marginTop: 12 }} onPress={() => openQuantityModal(item)}>
-                                    <FontAwesome name="cart-plus" size={20} color='#835741' />
-                                    <Text style={styleMedicine.type}>Thêm vào giỏ</Text>
-                                </TouchableOpacity>
-
+                                {user.role === 'patient' ?
+                                    <TouchableOpacity style={{ flexDirection: 'row', marginTop: 12 }} onPress={() => openQuantityModal(item)}>
+                                        <FontAwesome name="cart-plus" size={20} color='#835741' />
+                                        <Text style={styleMedicine.type}>Thêm vào giỏ</Text>
+                                    </TouchableOpacity>
+                                    : null}
                             </View>
                         </View>
                     ))}
@@ -211,6 +225,8 @@ const MedicineList = () => {
                             <View style={{ borderWidth: 1, borderColor: '#835741', borderRadius: 5, marginLeft: 220, paddingVertical: 3, paddingHorizontal: 3 }}>
                                 <FontAwesome name="close" size={20} style={{ color: '#835741' }} onPress={() => setModalVisible(false)} />
                             </View>
+                            <Image source={{ uri: selectedMedicine.image }} style={MyStyles.image} />
+                            <Text style={MyStyles.modalTitle}>{selectedMedicine.name}</Text>
                             <Text style={MyStyles.modalTitle}>Chọn số lượng</Text>
                             <View style={MyStyles.quantityContainer}>
                                 <TouchableOpacity onPress={() => adjustQuantity(-1)}>
