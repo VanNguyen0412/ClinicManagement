@@ -33,9 +33,9 @@ AUTH_USER_MODEL = 'clinicapi.User'
 import cloudinary
 
 cloudinary.config(
-    cloud_name="dr9h3ttpy",
-    api_key="938152162715573",
-    api_secret="IIJZy3CtSGsMGw1JVyBHSftoCBU"
+    cloud_name="",
+    api_key="",
+    api_secret=""
 )
 
 # Application definition
@@ -105,7 +105,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'clinicdb',
         'USER': 'root',
-        'PASSWORD': 'Admin@123',
+        'PASSWORD': '',
         'HOST': ''  # mặc định localhost
     }
 }
@@ -147,8 +147,6 @@ STATIC_URL = 'static/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
-CLIENT_ID = 'Tb1JGVGg4Ew1bWMAdlWh7UdyQaefMl8Uc3QxLmQI'
-CLIENT_SECRET = '9mMKrSHbjNKmRiEQMyJajVbHwuhW9x7RQQieD7bOowG4mmkZOXU5X5ZxCs6RIoLc2WSwUCraLuCvqovDAugvmvJsStMPYlzQvgMbNEuci4vJJfNO2DznQi9zbPtCO3wm'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -156,6 +154,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'yanghara2611@gmail.com'
-EMAIL_HOST_PASSWORD = 'iiyi bfps ggeq arti'
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
 
