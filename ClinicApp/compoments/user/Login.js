@@ -42,8 +42,8 @@ const Login = ({ navigation, route }) => {
         try {
             let res = await APIs.post(endpoints['login'], {
                 ...user, 
-                'client_id': 'Tb1JGVGg4Ew1bWMAdlWh7UdyQaefMl8Uc3QxLmQI',
-                'client_secret': '9mMKrSHbjNKmRiEQMyJajVbHwuhW9x7RQQieD7bOowG4mmkZOXU5X5ZxCs6RIoLc2WSwUCraLuCvqovDAugvmvJsStMPYlzQvgMbNEuci4vJJfNO2DznQi9zbPtCO3wm',
+                'client_id': '',
+                'client_secret': '',
                 'grant_type': 'password'
             });
             await AsyncStorage.setItem("token", res.data.access_token);
